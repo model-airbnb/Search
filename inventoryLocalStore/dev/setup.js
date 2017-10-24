@@ -13,8 +13,7 @@ let pool = new Pool({
 pool.query(`DROP DATABASE IF EXISTS ${database}`)
   .then(() => pool.query(`CREATE DATABASE ${database}`))
   .then(() => pool.end())
-  // Connect to the inventory database to create local inventory store tables
-  .then(() => {
+  .then(() => { // Connect to the inventory database to create local inventory store tables
     pool = new Pool({ connectionString: dbConnection });
     return pool.query(createTableQueries.listings);
   })
@@ -27,11 +26,10 @@ pool.query(`DROP DATABASE IF EXISTS ${database}`)
   // Add seed data to inventory store tables
   .then(() => pool.query(addSeedDataQueries.listings))
   .then(() => pool.query(addSeedDataQueries.availability))
-  .then(() => pool.end())
   .then(() => {
     console.log('INVENTORY STORE: All tables created and seeded with data.');
   })
   .catch((err) => {
     console.error(err);
-    pool.end();
-  });
+  })
+  .then(() => pool.end());
