@@ -7,11 +7,7 @@ const config = {
 };
 
 const {
-  dbuser,
-  password,
-  host,
-  port,
-  database,
+  dbuser, password, host, port, database,
 } = config;
 
 const pgConnectionString = `postgresql://${dbuser}:${password}@${host}:${port}/postgres`;
