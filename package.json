@@ -4,6 +4,7 @@
   "description": "Search service for a model Airbnb system",
   "main": "index.js",
   "dependencies": {
+    "express": "^4.16.2",
     "pg": "^7.3.0"
   },
   "devDependencies": {
