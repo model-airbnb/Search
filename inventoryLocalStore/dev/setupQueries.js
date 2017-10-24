@@ -1,4 +1,4 @@
-const createTableQueries = {
+module.exports.createTableQueries = {
   listings: `
     CREATE TABLE listings (
       id                  SERIAL UNIQUE NOT NULL PRIMARY KEY,
@@ -47,16 +47,16 @@ const createTableQueries = {
   `,
 };
 
-const csvImportQueries = {
+module.exports.csvImportQueries = {
   listings: `
-    COPY listings_raw_data FROM '${__dirname}/seedData/ListingSummaryInformation-SF.csv' DELIMITER ',' CSV HEADER;
+    COPY listings_raw_data FROM '${__dirname}/data/ListingSummaryInformation-SF.csv' DELIMITER ',' CSV HEADER;
   `,
   availability: `
-    COPY availability_raw_data FROM '${__dirname}/seedData/Availability-SF.csv' DELIMITER ',' CSV HEADER;
+    COPY availability_raw_data FROM '${__dirname}/data/Availability-SF.csv' DELIMITER ',' CSV HEADER;
   `,
 };
 
-const addSeedDataQueries = {
+module.exports.addSeedDataQueries = {
   listings: `
     INSERT INTO listings (
       id,
@@ -91,7 +91,3 @@ const addSeedDataQueries = {
     WHERE available = 't';
   `,
 };
-
-module.exports.createTableQueries = createTableQueries;
-module.exports.csvImportQueries = csvImportQueries;
-module.exports.addSeedDataQueries = addSeedDataQueries;

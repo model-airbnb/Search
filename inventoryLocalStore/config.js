@@ -6,13 +6,11 @@ const config = {
   port: process.env.PGPORT || 5432,
 };
 
+module.exports = config;
+
 const {
   dbuser, password, host, port, database,
 } = config;
 
-const pgConnectionString = `postgresql://${dbuser}:${password}@${host}:${port}/postgres`;
-const dbConnectionString = process.env.DATABASE_URL || `postgresql://${dbuser}:${password}@${host}:${port}/${database}`;
-
-module.exports = config;
-module.exports.pgConnection = pgConnectionString;
-module.exports.dbConnection = dbConnectionString;
+module.exports.pgConnection = `postgresql://${dbuser}:${password}@${host}:${port}/postgres`;
+module.exports.dbConnection = process.env.DATABASE_URL || `postgresql://${dbuser}:${password}@${host}:${port}/${database}`;
