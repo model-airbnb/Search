@@ -21,6 +21,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 ## Requirements
 
 - Node 6.9.x
+- Express 4.16.2
 - Postgresql 9.6.5
 - Amazon SQS
 - Elastic Search
