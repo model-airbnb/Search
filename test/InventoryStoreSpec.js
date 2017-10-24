@@ -32,7 +32,7 @@ describe('Inventory Store Spec', () => {
         });
     });
 
-    it('Should retrieve all listings matching "San Francisco" when top 100 is requested', (done) => {
+    it('Should retrieve all 5 listings matching "San Francisco" when top 100 is requested', (done) => {
       db.getListings('San Francisco', 100)
         .then((listings) => {
           const SFListings = listings.filter(listing => listing.market === 'San Francisco');
