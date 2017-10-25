@@ -1,6 +1,7 @@
 const db = require('./models/searchQueries');
 
-const DATASET_SIZE = 100000;
+const DATASET_SIZE = 10000000;
+const BATCH_SIZE = 1000;
 const SEARCH_QUERY_ID_START = 5000000;
 const VISIT_ID_START = 1;
 const USER_ID_RANGE = 100000;
@@ -53,29 +54,39 @@ const getRandomRoomType = () =>
 
 /* ----- HELPER FUNCTIONS END ----- */
 
-const queries = [];
 const nextSearchQueryId = incrementIdFrom(SEARCH_QUERY_ID_START);
 const nextVisitId = incrementIdFrom(VISIT_ID_START);
 const nextSearchTimestamp = countTimeFrom(new Date());
-for (let i = 0; i < DATASET_SIZE; i += 1) {
-  const { checkIn, checkOut } = getRandomDateRange();
-  const query = {
-    searchQueryId: nextSearchQueryId(),
-    timestamp: nextSearchTimestamp(),
-    visitId: nextVisitId(),
-    userId: getRandomUser(),
-    market: getRandomMarket(),
-    checkIn,
-    checkOut,
-    roomType: getRandomRoomType(),
-  };
-  queries.push(query);
-}
 
-db.emptySearchQueries()
-  .then(() => db.saveSearchQueries(queries))
-  .then(() => {
-    console.log(`SEARCH QUERY GENERATION: ${queries.length} search queries generated and saved.`);
-    db.mongoose.connection.close();
-  })
-  .catch(console.error);
+const generateQueryBatch = () => {
+  const queries = [];
+  for (let i = 0; i < BATCH_SIZE; i += 1) {
+    const { checkIn, checkOut } = getRandomDateRange();
+    const query = {
+      searchQueryId: nextSearchQueryId(),
+      timestamp: nextSearchTimestamp(),
+      visitId: nextVisitId(),
+      userId: getRandomUser(),
+      market: getRandomMarket(),
+      checkIn,
+      checkOut,
+      roomType: getRandomRoomType(),
+    };
+    queries.push(query);
+  }
+  return db.saveSearchQueries(queries);
+};
+
+let async = db.emptySearchQueries();
+for (let i = 0; i < DATASET_SIZE / BATCH_SIZE; i += 1) {
+  async = async.then(generateQueryBatch)
+    .then(() => {
+      process.stdout.clearLine();
+      process.stdout.cursorTo(0);
+      process.stdout.write(`${i * BATCH_SIZE} / ${DATASET_SIZE} search queries generated and saved.`);
+    });
+}
+async.then(() => {
+  console.log(`SEARCH QUERY GENERATION: ${DATASET_SIZE} search queries generated and saved.`);
+  db.mongoose.connection.close();
+});
