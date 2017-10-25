@@ -41,12 +41,10 @@ const getRandomMarket = () =>
 const getRandomDateRange = () => {
   const daysUntilTravel = Math.ceil(Math.random() * MAX_DAYS_UNTIL_TRAVEL);
   const lengthOfStay = Math.ceil(Math.random() * MAX_LENGTH_OF_STAY);
-
   const checkIn = new Date();
   const checkOut = new Date();
   checkIn.setDate(checkIn.getDate() + daysUntilTravel);
   checkOut.setDate(checkOut.getDate() + daysUntilTravel + lengthOfStay);
-
   return { checkIn, checkOut };
 };
 
@@ -61,7 +59,6 @@ const nextVisitId = incrementIdFrom(VISIT_ID_START);
 const nextSearchTimestamp = countTimeFrom(new Date());
 for (let i = 0; i < DATASET_SIZE; i += 1) {
   const { checkIn, checkOut } = getRandomDateRange();
-
   const query = {
     searchQueryId: nextSearchQueryId(),
     timestamp: nextSearchTimestamp(),
@@ -72,7 +69,6 @@ for (let i = 0; i < DATASET_SIZE; i += 1) {
     checkOut,
     roomType: getRandomRoomType(),
   };
-
   queries.push(query);
 }
 
@@ -80,5 +76,6 @@ db.emptySearchQueries()
   .then(() => db.saveSearchQueries(queries))
   .then(() => {
     console.log(`SEARCH QUERY GENERATION: ${queries.length} search queries generated and saved.`);
+    db.mongoose.connection.close();
   })
   .catch(console.error);

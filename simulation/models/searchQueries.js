@@ -31,5 +31,8 @@ const saveSearchQueries = queries =>
     });
   });
 
-module.exports.emptySearchQueries = emptySearchQueries;
-module.exports.saveSearchQueries = saveSearchQueries;
+module.exports = {
+  mongoose,
+  emptySearchQueries,
+  saveSearchQueries,
+};
