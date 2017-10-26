@@ -2,8 +2,8 @@ module.exports.createTableQueries = {
   listings: `
     CREATE TABLE listings (
       id                  SERIAL UNIQUE NOT NULL PRIMARY KEY,
-      name                VARCHAR(140),
-      host_name           VARCHAR(80),
+      name                VARCHAR(500),
+      host_name           VARCHAR(300),
       market              VARCHAR(80),
       neighbourhood       VARCHAR(80),
       room_type           VARCHAR(40),
@@ -20,9 +20,9 @@ module.exports.createTableQueries = {
   listingsRawData: `
     CREATE TABLE listings_raw_data (
       id                              INT,
-      name                            VARCHAR(140),
+      name                            VARCHAR(500),
       host_id                         INT,
-      host_name                       VARCHAR(40),
+      host_name                       VARCHAR(300),
       neighbourhood_group             VARCHAR(40),
       neighbourhood                   VARCHAR(40),
       latitude                        FLOAT,
@@ -49,10 +49,10 @@ module.exports.createTableQueries = {
 
 module.exports.csvImportQueries = {
   listings: `
-    COPY listings_raw_data FROM '${__dirname}/data/ListingSummaryInformation-SF.csv' DELIMITER ',' CSV HEADER;
+    COPY listings_raw_data FROM '${__dirname}/data/listings-SF.csv' DELIMITER ',' CSV HEADER;
   `,
   availability: `
-    COPY availability_raw_data FROM '${__dirname}/data/Availability-SF.csv' DELIMITER ',' CSV HEADER;
+    COPY availability_raw_data FROM '${__dirname}/data/availability-SF.csv' DELIMITER ',' CSV HEADER;
   `,
 };
 

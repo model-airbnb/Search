@@ -1,8 +1,8 @@
 // This script tears down all existing database artifacts for the service, sets
 // them up from scratch and populates the tables with some seed data.
 const { Pool } = require('pg');
-const { database, pgConnection, dbConnection } = require('../config');
-const { createTableQueries, csvImportQueries, addSeedDataQueries } = require('./setupQueries');
+const { database, pgConnection, dbConnection } = require('../../inventoryLocalStore/config');
+const { createTableQueries, csvImportQueries, addSeedDataQueries } = require('./dbQueries');
 
 // Connect first to the postgres database to manage inventory database drop/create
 let pool = new Pool({
