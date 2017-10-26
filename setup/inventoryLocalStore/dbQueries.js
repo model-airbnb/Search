@@ -1,4 +1,4 @@
-module.exports.createTableQueries = {
+module.exports.createTable = {
   listings: `
     CREATE TABLE listings (
       id                  SERIAL UNIQUE NOT NULL PRIMARY KEY,
@@ -47,7 +47,7 @@ module.exports.createTableQueries = {
   `,
 };
 
-module.exports.csvImportQueries = {
+module.exports.csvImport = {
   listings: `
     COPY listings_raw_data FROM '${__dirname}/data/listings-SF.csv' DELIMITER ',' CSV HEADER;
   `,
@@ -56,7 +56,7 @@ module.exports.csvImportQueries = {
   `,
 };
 
-module.exports.addSeedDataQueries = {
+module.exports.addSeedData = {
   listings: `
     INSERT INTO listings (
       id,
