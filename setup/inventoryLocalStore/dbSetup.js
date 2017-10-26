@@ -6,22 +6,17 @@ const {
   createTable, csvImport, addSeedData, dropTable,
 } = require('./dbQueries');
 
-// const markets = [
-//   { name: 'San Francisco', filename: 'SF' },
-//   { name: 'Seattle', filename: 'Seattle' },
-//   { name: 'Sydney', filename: 'Sydney' },
-//   { name: 'New York', filename: 'NYC' },
-//   { name: 'Toronto', filename: 'Toronto' },
-//   { name: 'Paris', filename: 'Paris' },
-//   { name: 'London', filename: 'London' },
-//   { name: 'Hong Kong', filename: 'HK' },
-//   { name: 'Amsterdam', filename: 'Amsterdam' },
-//   { name: 'Montreal', filename: 'Montreal' },
-// ];
-
 const markets = [
   { name: 'San Francisco', filename: 'sf' },
-  // { name: 'Seattle', filename: 'seattle' },
+  { name: 'Seattle', filename: 'seattle' },
+  { name: 'Sydney', filename: 'sydney' },
+  { name: 'New York', filename: 'nyc' },
+  { name: 'Toronto', filename: 'toronto' },
+  { name: 'Paris', filename: 'paris' },
+  { name: 'London', filename: 'london' },
+  { name: 'Hong Kong', filename: 'hk' },
+  { name: 'Amsterdam', filename: 'amsterdam' },
+  { name: 'Montreal', filename: 'montreal' },
 ];
 
 const createTables = pool => (
@@ -30,12 +25,14 @@ const createTables = pool => (
 );
 
 const seedTable = (pool, market) => (
-  pool.query(createTable.listingsRawData(market))
-    .then(() => pool.query(createTable.availabilityRawData(market)))
+  pool.query(createTable.listingsRawData)
+    .then(() => pool.query(createTable.availabilityRawData))
     .then(() => pool.query(csvImport.listings(market)))
     .then(() => pool.query(csvImport.availability(market)))
     .then(() => pool.query(addSeedData.listings(market)))
-    .then(() => pool.query(addSeedData.availability(market)))
+    .then(() => pool.query(addSeedData.availability))
+    .then(() => pool.query(dropTable.listingsRawData))
+    .then(() => pool.query(dropTable.availabilityRawData))
     .catch(console.error)
 );
 
@@ -48,14 +45,13 @@ let pool = new Pool({
 let async = pool.query(`DROP DATABASE IF EXISTS ${database}`)
   .then(() => pool.query(`CREATE DATABASE ${database}`))
   .then(() => pool.end())
-  .then(() => {
-    // Connect to the inventory database to create local inventory store tables
+  .then(() => { // Connect to the inventory database to create local inventory store tables
     pool = new Pool({ connectionString: dbConnection });
     return createTables(pool);
   });
 
 for (let i = 0; i < markets.length; i += 1) {
-  async = async.then(seedTable(pool, markets[i]))
+  async = async.then(() => seedTable(pool, markets[i]))
     .then(() => console.log(`Data loaded for ${markets[i].name}`))
     .catch(console.error);
 }

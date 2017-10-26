@@ -17,8 +17,8 @@ module.exports.createTable = {
       price               MONEY
     );
   `,
-  listingsRawData: market => `
-    CREATE TABLE ${market.filename}_listings_raw_data (
+  listingsRawData: `
+    CREATE TABLE listings_raw_data (
       id                              INT,
       name                            VARCHAR(500),
       host_id                         INT,
@@ -37,8 +37,8 @@ module.exports.createTable = {
       availability_365                INT
     );
   `,
-  availabilityRawData: market => `
-    CREATE TABLE ${market.filename}_availability_raw_data (
+  availabilityRawData: `
+    CREATE TABLE availability_raw_data (
       listing_id                      INT,
       inventory_date                  VARCHAR(20),
       available                       BOOLEAN,
@@ -50,8 +50,8 @@ module.exports.createTable = {
 const DATA_DIR = `${__dirname}/data`;
 
 module.exports.csvImport = {
-  listings: market => `COPY ${market.filename}_listings_raw_data FROM '${DATA_DIR}/listings-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
-  availability: market => `COPY ${market.filename}_availability_raw_data FROM '${DATA_DIR}/availability-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
+  listings: market => `COPY listings_raw_data FROM '${DATA_DIR}/listings-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
+  availability: market => `COPY availability_raw_data FROM '${DATA_DIR}/availability-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
 };
 
 module.exports.addSeedData = {
@@ -73,9 +73,9 @@ module.exports.addSeedData = {
       neighbourhood,
       room_type,
       floor(random() * 100) AS average_rating
-    FROM ${market.filename}_listings_raw_data;
+    FROM listings_raw_data;
   `,
-  availability: market => `
+  availability: `
     INSERT INTO availability (
       listing_id,
       inventory_date,
@@ -85,7 +85,7 @@ module.exports.addSeedData = {
       listing_id,
       to_date(inventory_date, 'YYYY-MM-DD') AS inventory_date,
       price
-    FROM ${market.filename}_availability_raw_data
+    FROM availability_raw_data
     WHERE available = 't';
   `,
 };
