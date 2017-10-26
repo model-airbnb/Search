@@ -1,11 +1,13 @@
-const db = require('./models/searchQueries');
+const elasticSearch = require('../../analytics/elasticSearch');
 
+const ES_INDEX = 'searchqueries';
 const DATASET_SIZE = 10000000;
-const BATCH_SIZE = 1000;
+const BATCH_SIZE = 10000;
+const SEARCH_START_DATE_OFFSET = 50;
 const SEARCH_QUERY_ID_START = 5000000;
 const VISIT_ID_START = 1;
 const USER_ID_RANGE = 100000;
-const SEARCH_FREQUENCY_IN_MS = 100;
+const SEARCH_FREQUENCY_IN_MS = 1000;
 const MARKETS = [
   'San Francisco', 'Seattle', 'Sydney', 'New York', 'Toronto', 'Paris',
   'London', 'Hong Kong', 'Amsterdam', 'Montreal',
@@ -54,9 +56,11 @@ const getRandomRoomType = () =>
 
 /* ----- HELPER FUNCTIONS END ----- */
 
+const searchStartDate = new Date();
+searchStartDate.setDate(searchStartDate.getDate() - SEARCH_START_DATE_OFFSET);
+const nextSearchTimestamp = countTimeFrom(searchStartDate);
 const nextSearchQueryId = incrementIdFrom(SEARCH_QUERY_ID_START);
 const nextVisitId = incrementIdFrom(VISIT_ID_START);
-const nextSearchTimestamp = countTimeFrom(new Date());
 
 const generateQueryBatch = () => {
   const queries = [];
@@ -74,19 +78,21 @@ const generateQueryBatch = () => {
     };
     queries.push(query);
   }
-  return db.saveSearchQueries(queries);
+  return elasticSearch.bulkInsertDocuments(ES_INDEX, 'dated', queries);
 };
 
-let async = db.emptySearchQueries();
+let async = elasticSearch.deleteIndex(ES_INDEX);
 for (let i = 0; i < DATASET_SIZE / BATCH_SIZE; i += 1) {
   async = async.then(generateQueryBatch)
     .then(() => {
       process.stdout.clearLine();
       process.stdout.cursorTo(0);
-      process.stdout.write(`${i * BATCH_SIZE} / ${DATASET_SIZE} search queries generated and saved.`);
+      process.stdout.write(`${i * BATCH_SIZE}/${DATASET_SIZE} search queries indexed`);
     });
 }
 async.then(() => {
-  process.stdout.write(`\nSEARCH QUERY GENERATION: ${DATASET_SIZE} search queries generated and saved.`);
-  db.mongoose.connection.close();
+  process.stdout.clearLine();
+  process.stdout.cursorTo(0);
+  process.stdout.write(`${DATASET_SIZE} search queries indexed`);
+  process.stdout.write('\nSearch query generation and indexing COMPLETE');
 });
