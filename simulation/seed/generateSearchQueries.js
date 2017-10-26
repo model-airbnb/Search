@@ -8,13 +8,13 @@ const SEARCH_QUERY_ID_START = 5000000;
 const VISIT_ID_START = 1;
 const USER_ID_RANGE = 100000;
 const SEARCH_FREQUENCY_IN_MS = 1000;
-const MARKETS = [
+const MAX_DAYS_UNTIL_TRAVEL = 45;
+const MAX_LENGTH_OF_STAY = 7;
+const markets = [
   'San Francisco', 'Seattle', 'Sydney', 'New York', 'Toronto', 'Paris',
   'London', 'Hong Kong', 'Amsterdam', 'Montreal',
 ];
-const MAX_DAYS_UNTIL_TRAVEL = 45;
-const MAX_LENGTH_OF_STAY = 7;
-const ROOM_TYPES = ['any', 'Entire home/apt', 'Private room', 'Shared room'];
+const roomTypes = ['any', 'Entire home/apt', 'Private room', 'Shared room'];
 
 /* ----- HELPER FUNCTIONS BEGIN ----- */
 
@@ -39,7 +39,7 @@ const countTimeFrom = (now) => {
 };
 
 const getRandomMarket = () =>
-  MARKETS[Math.floor(Math.random() * MARKETS.length)];
+  markets[Math.floor(Math.random() * markets.length)];
 
 const getRandomDateRange = () => {
   const daysUntilTravel = Math.ceil(Math.random() * MAX_DAYS_UNTIL_TRAVEL);
@@ -52,7 +52,7 @@ const getRandomDateRange = () => {
 };
 
 const getRandomRoomType = () =>
-  ROOM_TYPES[Math.floor(Math.random() * ROOM_TYPES.length)];
+  roomTypes[Math.floor(Math.random() * roomTypes.length)];
 
 /* ----- HELPER FUNCTIONS END ----- */
 
