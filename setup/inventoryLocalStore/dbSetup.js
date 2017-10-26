@@ -2,7 +2,42 @@
 // them up from scratch and populates the tables with some seed data.
 const { Pool } = require('pg');
 const { database, pgConnection, dbConnection } = require('../../inventoryLocalStore/config');
-const { createTable, csvImport, addSeedData } = require('./dbQueries');
+const {
+  createTable, csvImport, addSeedData, dropTable,
+} = require('./dbQueries');
+
+// const markets = [
+//   { name: 'San Francisco', filename: 'SF' },
+//   { name: 'Seattle', filename: 'Seattle' },
+//   { name: 'Sydney', filename: 'Sydney' },
+//   { name: 'New York', filename: 'NYC' },
+//   { name: 'Toronto', filename: 'Toronto' },
+//   { name: 'Paris', filename: 'Paris' },
+//   { name: 'London', filename: 'London' },
+//   { name: 'Hong Kong', filename: 'HK' },
+//   { name: 'Amsterdam', filename: 'Amsterdam' },
+//   { name: 'Montreal', filename: 'Montreal' },
+// ];
+
+const markets = [
+  { name: 'San Francisco', filename: 'sf' },
+  // { name: 'Seattle', filename: 'seattle' },
+];
+
+const createTables = pool => (
+  pool.query(createTable.listings)
+    .then(() => pool.query(createTable.availability))
+);
+
+const seedTable = (pool, market) => (
+  pool.query(createTable.listingsRawData(market))
+    .then(() => pool.query(createTable.availabilityRawData(market)))
+    .then(() => pool.query(csvImport.listings(market)))
+    .then(() => pool.query(csvImport.availability(market)))
+    .then(() => pool.query(addSeedData.listings(market)))
+    .then(() => pool.query(addSeedData.availability(market)))
+    .catch(console.error)
+);
 
 // Connect first to the postgres database to manage inventory database drop/create
 let pool = new Pool({
@@ -10,26 +45,22 @@ let pool = new Pool({
 });
 
 // Drop the existing inventory database and create a new one
-pool.query(`DROP DATABASE IF EXISTS ${database}`)
+let async = pool.query(`DROP DATABASE IF EXISTS ${database}`)
   .then(() => pool.query(`CREATE DATABASE ${database}`))
   .then(() => pool.end())
-  .then(() => { // Connect to the inventory database to create local inventory store tables
-    pool = new Pool({ connectionString: dbConnection });
-    return pool.query(createTable.listings);
-  })
-  .then(() => pool.query(createTable.availability))
-  // Create temp tables for CSV imports and import data
-  .then(() => pool.query(createTable.listingsRawData))
-  .then(() => pool.query(createTable.availabilityRawData))
-  .then(() => pool.query(csvImport.listings))
-  .then(() => pool.query(csvImport.availability))
-  // Add seed data to inventory store tables
-  .then(() => pool.query(addSeedData.listings))
-  .then(() => pool.query(addSeedData.availability))
   .then(() => {
-    console.log('INVENTORY STORE: All tables created and seeded with data.');
-  })
-  .catch((err) => {
-    console.error(err);
-  })
+    // Connect to the inventory database to create local inventory store tables
+    pool = new Pool({ connectionString: dbConnection });
+    return createTables(pool);
+  });
+
+for (let i = 0; i < markets.length; i += 1) {
+  async = async.then(seedTable(pool, markets[i]))
+    .then(() => console.log(`Data loaded for ${markets[i].name}`))
+    .catch(console.error);
+}
+
+async.then(() => {
+  console.log('INVENTORY STORE: All tables created and seeded with data.');
+})
   .then(() => pool.end());

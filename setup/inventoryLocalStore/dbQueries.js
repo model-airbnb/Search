@@ -17,8 +17,8 @@ module.exports.createTable = {
       price               MONEY
     );
   `,
-  listingsRawData: `
-    CREATE TABLE listings_raw_data (
+  listingsRawData: market => `
+    CREATE TABLE ${market.filename}_listings_raw_data (
       id                              INT,
       name                            VARCHAR(500),
       host_id                         INT,
@@ -37,8 +37,8 @@ module.exports.createTable = {
       availability_365                INT
     );
   `,
-  availabilityRawData: `
-    CREATE TABLE availability_raw_data (
+  availabilityRawData: market => `
+    CREATE TABLE ${market.filename}_availability_raw_data (
       listing_id                      INT,
       inventory_date                  VARCHAR(20),
       available                       BOOLEAN,
@@ -47,17 +47,15 @@ module.exports.createTable = {
   `,
 };
 
+const DATA_DIR = `${__dirname}/data`;
+
 module.exports.csvImport = {
-  listings: `
-    COPY listings_raw_data FROM '${__dirname}/data/listings-SF.csv' DELIMITER ',' CSV HEADER;
-  `,
-  availability: `
-    COPY availability_raw_data FROM '${__dirname}/data/availability-SF.csv' DELIMITER ',' CSV HEADER;
-  `,
+  listings: market => `COPY ${market.filename}_listings_raw_data FROM '${DATA_DIR}/listings-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
+  availability: market => `COPY ${market.filename}_availability_raw_data FROM '${DATA_DIR}/availability-${market.filename}.csv' DELIMITER ',' CSV HEADER;`,
 };
 
 module.exports.addSeedData = {
-  listings: `
+  listings: market => `
     INSERT INTO listings (
       id,
       name,
@@ -71,13 +69,13 @@ module.exports.addSeedData = {
       id,
       name,
       host_name,
-      'San Francisco'::varchar(80) AS market,
+      '${market.name}'::varchar(80) AS market,
       neighbourhood,
       room_type,
       floor(random() * 100) AS average_rating
-    FROM listings_raw_data;
+    FROM ${market.filename}_listings_raw_data;
   `,
-  availability: `
+  availability: market => `
     INSERT INTO availability (
       listing_id,
       inventory_date,
@@ -87,7 +85,12 @@ module.exports.addSeedData = {
       listing_id,
       to_date(inventory_date, 'YYYY-MM-DD') AS inventory_date,
       price
-    FROM availability_raw_data
+    FROM ${market.filename}_availability_raw_data
     WHERE available = 't';
   `,
+};
+
+module.exports.dropTable = {
+  listingsRawData: 'DROP TABLE IF EXISTS listings_raw_data',
+  availabilityRawData: 'DROP TABLE IF EXISTS availability_raw_data',
 };
