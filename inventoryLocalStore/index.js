@@ -1,12 +1,11 @@
 const { Pool } = require('pg');
 
-const msToDays = ms => ms / 86400000;
+const getLengthOfStay = (start, end) =>
+  ((new Date(end) - new Date(start)) / 86400000) + 1;
 
 class Inventory {
   constructor(connection) {
-    this.pool = new Pool({
-      connectionString: connection,
-    });
+    this.pool = new Pool({ connectionString: connection });
   }
 
   getListings(market, limit) {
@@ -18,8 +17,7 @@ class Inventory {
   }
 
   getAvailableListings(market, start, end, limit) {
-    const lengthOfStay = msToDays(Date(end) - Date(start));
-    const queryLimit = limit ? ` FETCH FIRST ${limit * lengthOfStay} ROWS ONLY` : '';
+    const queryLimit = limit ? ` FETCH FIRST ${limit * getLengthOfStay(start, end)} ROWS ONLY` : '';
     const queryString = `
       SELECT DISTINCT *
       FROM listings l
