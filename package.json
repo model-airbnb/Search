@@ -19,7 +19,8 @@
   },
   "scripts": {
     "test": "mocha test/*.js",
-    "dev": "nodemon server/index.js"
+    "dev": "nodemon server/index.js",
+    "setup-inventory": "node setup/inventoryLocalStore/dbSetup.js"
   },
   "repository": {
     "type": "git",
