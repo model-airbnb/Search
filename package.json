@@ -4,10 +4,12 @@
   "description": "Search service for a model Airbnb system",
   "main": "index.js",
   "dependencies": {
+    "aws-sdk": "^2.141.0",
     "elasticsearch": "^13.3.1",
     "express": "^4.16.2",
     "mongoose": "^4.12.4",
-    "pg": "^7.3.0"
+    "pg": "^7.3.0",
+    "uniqid": "^4.1.1"
   },
   "devDependencies": {
     "chai": "^4.1.2",
