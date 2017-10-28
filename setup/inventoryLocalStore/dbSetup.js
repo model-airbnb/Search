@@ -3,7 +3,7 @@
 const { Pool } = require('pg');
 const { database, pgConnection, dbConnection } = require('../../inventoryLocalStore/config');
 const {
-  createTable, csvImport, addSeedData, dropTable,
+  createTable, csvImport, addSeedData, dropTable, createIndex,
 } = require('./dbQueries');
 
 const markets = [
@@ -56,7 +56,10 @@ for (let i = 0; i < markets.length; i += 1) {
     .catch(console.error);
 }
 
-async.then(() => {
-  console.log('INVENTORY STORE: All tables created and seeded with data.');
-})
+async.then(() => pool.query(createIndex.listingsMarket))
+  .then(() => pool.query(createIndex.availabilityInventoryDate))
+  .then(() => pool.query(createIndex.availabilityListingIdInventoryDate))
+  .then(() => {
+    console.log('INVENTORY STORE: All tables created and seeded with data.');
+  })
   .then(() => pool.end());
