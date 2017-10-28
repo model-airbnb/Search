@@ -77,6 +77,7 @@ describe('Server Spec', () => {
         .expect((response) => {
           const availableListings = response.body.filter(result => result.inventory_date.split('T')[0] === '2017-11-12');
           expect(availableListings.length).to.equal(response.body.length);
+          expect(availableListings.length).to.equal(4);
         })
         .end(done);
     });
