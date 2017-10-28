@@ -60,14 +60,6 @@ describe('Inventory Store Spec', () => {
         });
     });
 
-    it('Should retrieve no Fakecity listings available on 2017-10-02', (done) => {
-      db.getAvailableListings('Fakecity', '2017-10-02', '2017-10-02')
-        .then((results) => {
-          expect(results.length).to.equal(0);
-          done();
-        });
-    });
-
     it('Should retrieve all San Francisco listings available for all dates in the range 2017-10-19 to 2017-10-23', (done) => {
       const availableListings = new Set();
       const stayDates = {
