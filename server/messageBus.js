@@ -1,5 +1,7 @@
 const uniqid = require('uniqid');
-const sqs = require('./amazonSQS');
+const SQS = require('./amazonSQS');
+
+const messageBus = new SQS();
 
 module.exports.publishSearchRequest = (params) => {
   const {
@@ -19,5 +21,5 @@ module.exports.publishSearchRequest = (params) => {
     limit: limit || 'no limit',
   };
 
-  sqs.publish({ topic: 'SearchRequest', payload: messagePayload });
+  messageBus.publish({ topic: 'SearchRequest', payload: messagePayload });
 };

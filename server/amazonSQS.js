@@ -6,15 +6,21 @@ AWS.config.update({
   secretAccessKey: process.env.SQS_SECRET_KEY || config.secretKey,
 });
 
-const sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
+class SQS {
+  constructor() {
+    this.sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
+  }
 
-module.exports.publish = (message) => {
-  const sqsParams = {
-    MessageBody: JSON.stringify(message),
-    QueueUrl: config.queue,
-  };
+  publish(message) {
+    const sqsParams = {
+      MessageBody: JSON.stringify(message),
+      QueueUrl: config.queue,
+    };
 
-  sqs.sendMessage(sqsParams, (err) => {
-    if (err) throw err;
-  });
-};
+    this.sqs.sendMessage(sqsParams, (err) => {
+      if (err) throw err;
+    });
+  }
+}
+
+module.exports = SQS;

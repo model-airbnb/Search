@@ -1,6 +1,8 @@
 const { expect } = require('chai');
+const sinon = require('sinon');
 const { testDbConnection } = require('./db/config');
 const Inventory = require('../inventoryLocalStore/index');
+const SQS = require('../server/amazonSQS');
 
 const testInventoryStore = new Inventory(testDbConnection);
 const service = require('../server/httpSearch')(testInventoryStore);
@@ -173,6 +175,36 @@ describe('Server Spec', () => {
             expect(availableListings.size).to.equal(2);
             expect(stayDates[date]).to.equal(2);
           });
+        })
+        .end(done);
+    });
+  });
+
+  describe('Message Bus Publish', () => {
+    let sqsStub;
+
+    beforeEach(() => {
+      sqsStub = sinon.stub(SQS.prototype, 'publish');
+    });
+
+    afterEach(() => {
+      sqsStub.restore();
+    });
+
+    it('Should publish all search requests with date ranges to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13`)
+        .expect(() => {
+          expect(sqsStub.called).to.equal(true);
+        })
+        .end(done);
+    });
+
+    it('Should publish all dateless search requests to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco`)
+        .expect(() => {
+          expect(sqsStub.called).to.equal(true);
         })
         .end(done);
     });
