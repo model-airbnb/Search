@@ -184,7 +184,7 @@ describe('Server Spec', () => {
     let sqsStub;
 
     beforeEach(() => {
-      sqsStub = sinon.stub(SQS.prototype, 'publish');
+      sqsStub = sinon.stub(SQS, 'publish');
     });
 
     afterEach(() => {
