@@ -7,6 +7,8 @@ const service = require('../server/httpSearch')(testInventoryStore);
 const request = require('supertest');
 
 const PORT = 4569;
+const TEST_VISIT_ID = '000';
+const TEST_USER_ID = '000000';
 
 describe('Server Spec', () => {
   let server;
@@ -19,10 +21,10 @@ describe('Server Spec', () => {
     server.close();
   });
 
-  describe('/search/:market', () => {
+  describe('Search by market', () => {
     it('Should retrieve all listings matching "San Francisco"', (done) => {
       request(server)
-        .get('/search/San%20Francisco')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -34,7 +36,7 @@ describe('Server Spec', () => {
 
     it('Should retrieve 0 listings matching "Fakecity"', (done) => {
       request(server)
-        .get('/search/Fakecity')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/Fakecity`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -42,12 +44,10 @@ describe('Server Spec', () => {
         })
         .end(done);
     });
-  });
 
-  describe('/search/:market/:limit', () => {
     it('Should retrieve top 2 listings matching "San Francisco"', (done) => {
       request(server)
-        .get('/search/San%20Francisco/2')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -58,7 +58,7 @@ describe('Server Spec', () => {
 
     it('Should retrieve all 5 listings matching "San Francisco" when top 100 is requested', (done) => {
       request(server)
-        .get('/search/San%20Francisco/100')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/100`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -68,10 +68,10 @@ describe('Server Spec', () => {
     });
   });
 
-  describe('/search/:market/:checkin/:checkout', () => {
+  describe('Search by market and date range', () => {
     it('Should retrieve all San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13', (done) => {
       request(server)
-        .get('/search/San%20Francisco/2017-11-12/2017-11-13')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -84,7 +84,7 @@ describe('Server Spec', () => {
 
     it('Should retrieve no San Francisco listings available for checkin 2017-10-02 checkout 2017-10-03', (done) => {
       request(server)
-        .get('/search/San%20Francisco/2017-10-02/2017-10-03')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-10-02/2017-10-03`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -99,7 +99,7 @@ describe('Server Spec', () => {
         '2017-10-19': 0, '2017-10-20': 0, '2017-10-21': 0, '2017-10-22': 0, '2017-10-23': 0,
       };
       request(server)
-        .get('/search/San%20Francisco/2017-10-19/2017-10-24')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-10-19/2017-10-24`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -113,13 +113,11 @@ describe('Server Spec', () => {
         })
         .end(done);
     });
-  });
 
-  describe('/search/:market/:checkin/:checkout/:limit', () => {
     it('Should retrieve 2 of 4 San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13', (done) => {
       const availableListings = new Set();
       request(server)
-        .get('/search/San%20Francisco/2017-11-12/2017-11-13/2')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13/2`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -133,7 +131,7 @@ describe('Server Spec', () => {
 
     it('Should retrieve all 4 San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13 when top 100 is requested', (done) => {
       request(server)
-        .get('/search/San%20Francisco/2017-11-12/2017-11-13/100')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13/100`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -145,7 +143,7 @@ describe('Server Spec', () => {
     it('Should retrieve 1 of 2 San Francisco listings available for checkin 2017-11-10 checkout 2017-11-13', (done) => {
       const stayDates = { '2017-11-10': 0, '2017-11-11': 0, '2017-11-12': 0 };
       request(server)
-        .get('/search/San%20Francisco/2017-11-10/2017-11-13/1')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13/1`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
@@ -163,7 +161,7 @@ describe('Server Spec', () => {
       const availableListings = new Set();
       const stayDates = { '2017-11-10': 0, '2017-11-11': 0, '2017-11-12': 0 };
       request(server)
-        .get('/search/San%20Francisco/2017-11-10/2017-11-13/100')
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13/100`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {

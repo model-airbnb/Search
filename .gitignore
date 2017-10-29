@@ -38,3 +38,6 @@ bower_components/
 
 # Raw data files used for import during development
 *.csv
+
+# Files with credentials
+server/aws.config.js
