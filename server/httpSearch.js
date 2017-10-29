@@ -31,35 +31,7 @@ const searchQueryMessage = (params) => {
 const createService = (inventoryStore) => {
   const service = express();
 
-  service.get('/search/:visitId/:userId/:market', (req, res) => {
-    const { market } = req.params;
-    inventoryStore.getListings(market)
-      .then((listings) => {
-        res.status(200).send(listings);
-      })
-      .catch(console.error);
-  });
-
-  service.get('/search/:visitId/:userId/:market/:limit', (req, res) => {
-    const { market, limit } = req.params;
-    inventoryStore.getListings(market, limit)
-      .then((listings) => {
-        res.status(200).send(listings);
-      })
-      .catch(console.error);
-  });
-
-  service.get('/search/:visitId/:userId/:market/:checkin/:checkout', (req, res) => {
-    const { market } = req.params;
-    const { firstNight, lastNight } = getStayBookendNights(req.params);
-    inventoryStore.getAvailableListings(market, firstNight, lastNight)
-      .then((listings) => {
-        res.status(200).send(listings);
-      })
-      .catch(console.error);
-  });
-
-  service.get('/search/:visitId/:userId/:market/:checkin/:checkout/:limit', (req, res) => {
+  service.get('/search/:visitId/:userId/:market/:checkin/:checkout/:limit*?', (req, res) => {
     const { market, limit } = req.params;
     const { firstNight, lastNight } = getStayBookendNights(req.params);
     const { messagePayload } = searchQueryMessage(req.params);
@@ -69,6 +41,15 @@ const createService = (inventoryStore) => {
       })
       .catch(console.error);
     messageBus.publish({ payload: messagePayload }, 'searchQuery');
+  });
+
+  service.get('/search/:visitId/:userId/:market/:limit*?', (req, res) => {
+    const { market, limit } = req.params;
+    inventoryStore.getListings(market, limit)
+      .then((listings) => {
+        res.status(200).send(listings);
+      })
+      .catch(console.error);
   });
 
   return service;
