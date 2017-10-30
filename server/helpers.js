@@ -1,3 +1,26 @@
+class OperationLog {
+  constructor(event) {
+    this.timeline = {
+      event,
+      start: { timestamp: new Date(), timeLapsed: 0 },
+    };
+    this.lastOperation = this.timeline.start.timestamp;
+  }
+
+  log(operation) {
+    this.timeline[operation] = {
+      timestamp: new Date(),
+      timeLapsed: Date.now() - this.lastOperation,
+    };
+  }
+
+  getLog() {
+    return this.timeline;
+  }
+}
+
+module.exports.OperationLog = OperationLog;
+
 module.exports.getStayBookendNights = (params) => {
   const lastNight = new Date(params.checkout);
   lastNight.setDate(lastNight.getDate() - 1);
@@ -23,7 +46,7 @@ module.exports.getUniqueAvailableListings = (listingsByNight) => {
         roomType: room_type,
         nightlyPrices: [
           {
-            date: inventory_date,
+            date: inventory_date.toJSON().split('T')[0],
             price,
           },
         ],
@@ -33,7 +56,7 @@ module.exports.getUniqueAvailableListings = (listingsByNight) => {
     } else {
       const index = [listingIndex[listingByNight.listing_id]];
       availableListings[index].nightlyPrices.push({
-        date: listingByNight.inventory_date,
+        date: listingByNight.inventory_date.toJSON().split('T')[0],
         price: listingByNight.price,
       });
     }
