@@ -8,14 +8,10 @@ AWS.config.update({
 
 const sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
 
-const queues = {
-  searchQuery: 'https://sqs.us-west-1.amazonaws.com/766255721592/modelAirbnb-searchQueries',
-};
-
-module.exports.publish = (message, name) => {
+module.exports.publish = (message) => {
   const sqsParams = {
     MessageBody: JSON.stringify(message),
-    QueueUrl: queues[name],
+    QueueUrl: config.queue,
   };
 
   sqs.sendMessage(sqsParams, (err) => {
