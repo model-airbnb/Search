@@ -77,9 +77,9 @@ describe('Server Spec', () => {
         .expect('Content-Type', /json/)
         .expect(200)
         .expect((response) => {
-          const availableListings = response.body.filter(result => result.inventory_date.split('T')[0] === '2017-11-12');
+          const availableListings = response.body.filter(result => result.nightlyPrices[0].date.split('T')[0] === '2017-11-12');
           expect(availableListings.length).to.equal(response.body.length);
-          expect(availableListings.length).to.equal(4);
+          expect(response.body.length).to.equal(4);
         })
         .end(done);
     });
@@ -106,8 +106,11 @@ describe('Server Spec', () => {
         .expect(200)
         .expect((response) => {
           response.body.forEach((result) => {
-            availableListings.add(result.listing_id);
-            stayDates[result.inventory_date.split('T')[0]] += 1;
+            availableListings.add(result.listingId);
+            expect(result.nightlyPrices.length).to.equal(5);
+            result.nightlyPrices.forEach((night) => {
+              stayDates[night.date.split('T')[0]] += 1;
+            });
           });
           Object.keys(stayDates).forEach((date) => {
             expect(stayDates[date]).to.equal(availableListings.size);
@@ -124,7 +127,7 @@ describe('Server Spec', () => {
         .expect(200)
         .expect((response) => {
           response.body.forEach((result) => {
-            availableListings.add(result.listing_id);
+            availableListings.add(result.listingId);
           });
           expect(availableListings.size).to.equal(2);
         })
@@ -150,7 +153,9 @@ describe('Server Spec', () => {
         .expect(200)
         .expect((response) => {
           response.body.forEach((result) => {
-            stayDates[result.inventory_date.split('T')[0]] += 1;
+            result.nightlyPrices.forEach((night) => {
+              stayDates[night.date.split('T')[0]] += 1;
+            });
           });
           Object.keys(stayDates).forEach((date) => {
             expect(stayDates[date]).to.equal(1);
@@ -168,8 +173,11 @@ describe('Server Spec', () => {
         .expect(200)
         .expect((response) => {
           response.body.forEach((result) => {
-            availableListings.add(result.listing_id);
-            stayDates[result.inventory_date.split('T')[0]] += 1;
+            availableListings.add(result.listingId);
+            expect(result.nightlyPrices.length).to.equal(3);
+            result.nightlyPrices.forEach((night) => {
+              stayDates[night.date.split('T')[0]] += 1;
+            });
           });
           Object.keys(stayDates).forEach((date) => {
             expect(availableListings.size).to.equal(2);
