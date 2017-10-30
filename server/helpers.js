@@ -2,7 +2,7 @@ class OperationLog {
   constructor(event) {
     this.timeline = {
       event,
-      start: { timestamp: new Date(), timeLapsed: 0 },
+      start: { timestamp: new Date(), msTimeLapsed: 0 },
     };
     this.lastOperation = this.timeline.start.timestamp;
   }
@@ -10,8 +10,9 @@ class OperationLog {
   log(operation) {
     this.timeline[operation] = {
       timestamp: new Date(),
-      timeLapsed: Date.now() - this.lastOperation,
+      msTimeLapsed: Date.now() - this.lastOperation,
     };
+    this.lastOperation = this.timeline[operation].timestamp;
   }
 
   getLog() {
