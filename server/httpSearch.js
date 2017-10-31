@@ -1,6 +1,6 @@
 const express = require('express');
 const uniqid = require('uniqid');
-const messageBus = require('./messageBus');
+const messageBus = require('../messageBus/index');
 const { OperationLog, getStayBookendNights, getUniqueAvailableListings } = require('./helpers');
 
 const createService = (inventoryStore) => {

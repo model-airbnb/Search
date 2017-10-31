@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const { testDbConnection } = require('./db/config');
 const Inventory = require('../inventoryLocalStore/index');
-const SQS = require('../server/amazonSQS');
+const SQS = require('../messageBus/amazonSQS');
 
 const testInventoryStore = new Inventory(testDbConnection);
 const service = require('../server/httpSearch')(testInventoryStore);
