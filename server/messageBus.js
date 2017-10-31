@@ -15,14 +15,17 @@ module.exports.publishSearchEvent
         visitId,
         userId,
         market,
-        checkIn: checkin || 'dateless',
-        checkOut: checkout || 'dateless',
         roomType: roomType || 'any',
         limit: limit || 'no limit',
       },
       searchResults,
       responseTimeline,
     };
+
+    if (checkin && checkout) {
+      messagePayload.searchRequest.checkIn = checkin;
+      messagePayload.searchRequest.checkOut = checkout;
+    }
 
     sqs.publish({ topic: TOPIC_SEARCH, payload: messagePayload });
   };
