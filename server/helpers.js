@@ -1,4 +1,4 @@
-const SEARCH_START_DATE_OFFSET = 50;
+const SEARCH_START_DATE_OFFSET = 42;
 
 const backDateSearchTimestamp = () => {
   const timestamp = new Date();
