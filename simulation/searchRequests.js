@@ -1,7 +1,7 @@
 const http = require('http');
 const { getRandomUser, getRandomMarket, getRandomDateRange } = require('./helpers');
 
-const MAX_CONCURRENT_REQUESTS = 20;
+const MAX_CONCURRENT_REQUESTS = process.argv[2] || 20;
 const SEARCH_FREQUENCY_MS = 1000;
 const QUERY_LIMIT = 25;
 const serverUrl = process.env.HTTP_SERVER_URL || 'http://localhost:4568';
@@ -29,10 +29,7 @@ const generateSearchRequest = (id) => {
   http.get(searchRequest, (res) => {
     res.on('data', () => {});
     res.on('end', () => {
-      setTimeout(
-        generateSearchRequest.bind(this, id),
-        Math.floor(Math.random() * SEARCH_FREQUENCY_MS),
-      );
+      setTimeout(generateSearchRequest.bind(this, id), Math.floor(Math.random() * SEARCH_FREQUENCY_MS));
       console.log(`${id}, status code: ${res.statusCode}, time lapsed: ${Date.now() - requestTimeStart}`);
     });
   }).on('error', console.error);
