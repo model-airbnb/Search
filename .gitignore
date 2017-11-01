@@ -40,4 +40,4 @@ bower_components/
 *.csv
 
 # Files with credentials
-server/aws.config.js
+messageBus/aws.config.js
