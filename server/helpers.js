@@ -1,8 +1,16 @@
+const SEARCH_START_DATE_OFFSET = 50;
+
+const backDateSearchTimestamp = () => {
+  const timestamp = new Date();
+  timestamp.setDate(timestamp.getDate() - SEARCH_START_DATE_OFFSET);
+  return timestamp;
+};
+
 class OperationLog {
   constructor(event) {
     this.timeline = {
       event,
-      start: { timestamp: new Date(), msTimeLapsed: 0 },
+      start: { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 },
     };
     this.lastOperation = this.timeline.start.timestamp;
   }
