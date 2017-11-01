@@ -1,6 +1,7 @@
 const sqs = require('./amazonSQS');
 
 const TOPIC_SEARCH = 'search';
+const MVP_MARKET = 'San Francisco';
 
 const publishSearchEvent = (searchEventId, params, results, timeline) => {
   const {
@@ -25,7 +26,7 @@ const publishSearchEvent = (searchEventId, params, results, timeline) => {
     messagePayload.request.checkOut = checkout;
   }
 
-  sqs.publish({ topic: TOPIC_SEARCH, payload: messagePayload });
+  sqs.publish({ topic: TOPIC_SEARCH, payload: messagePayload }, market === MVP_MARKET);
 };
 
 const checkForMessages = topic =>
