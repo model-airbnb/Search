@@ -1,32 +1,40 @@
-const { TOPIC_SEARCH, checkForMessages } = require('../messageBus/index');
+const { checkForMessages } = require('../messageBus/index');
 const elasticSearch = require('./elasticSearch');
 
-const ES_INDEX = 'searchEvents';
-const ES_TYPE_QUERY = 'searchQuery';
-const ES_TYPE_RESULTS = 'searchResults';
-const ES_TYPE_PERFORMANCE = 'searchPerformance';
-const SLEEP_IN_MS = 5000;
+const MAX_WORKERS = process.argv[2] || 10;
+const ES_INDEX = 'searchevents';
+const ES_TYPE_QUERY = 'query';
+const ES_TYPE_RESULTS = 'results';
+const ES_TYPE_PERFORMANCE = 'performancelog';
+const SLEEP_MS = 2000;
 
-const processSearchEvents = () => {
+const processSearchEvents = (id) => {
+  const taskTimeStart = Date.now();
   let messages;
-  checkForMessages(TOPIC_SEARCH)
+  checkForMessages()
     .then((messageBatch) => {
-      messages = messageBatch;
+      messages = messageBatch.map(message => message.payload);
       const searchQueries = messages.map(message =>
-        Object.assign({ searchEventId: message.Body.searchEventId }, message.Body.request));
+        Object.assign({ searchEventId: message.searchEventId }, message.request));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_QUERY, searchQueries);
     })
     .then(() => {
       const searchResults = messages.map(message =>
-        Object.assign({ searchEventId: message.Body.searchEventId }, message.Body.results));
+        Object.assign({ searchEventId: message.searchEventId, timestamp: message.request.timestamp }, message.results));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_RESULTS, searchResults);
     })
     .then(() => {
       const searchResponseTimes = messages.map(message =>
-        Object.assign({ searchEventId: message.Body.searchEventId }, message.Body.timeline));
+        Object.assign({ searchEventId: message.searchEventId, timestamp: message.request.timestamp }, message.timeline));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_PERFORMANCE, searchResponseTimes);
+    })
+    .then(() => {
+      setTimeout(processSearchEvents.bind(this, id), SLEEP_MS);
+      console.log(`${id}, messages processed: ${messages.length}, time lapsed: ${Date.now() - taskTimeStart}`);
     })
     .catch(console.error);
 };
 
-setInterval(processSearchEvents, SLEEP_IN_MS);
+for (let i = 1; i <= MAX_WORKERS; i += 1) {
+  processSearchEvents(i);
+}
