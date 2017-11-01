@@ -1,12 +1,12 @@
 const http = require('http');
-const fs = require('fs');
 const { getRandomUser, getRandomMarket, getRandomDateRange } = require('./helpers');
 
-const SEARCH_FREQUENCY_IN_MS = 3000;
+const MAX_CONCURRENT_REQUESTS = 20;
+const SEARCH_FREQUENCY_MS = 1000;
 const QUERY_LIMIT = 25;
-const LOG_FILE = `${__dirname}/searchRequests.log`;
+const serverUrl = process.env.HTTP_SERVER_URL || 'http://localhost:4568';
 
-const generateSearchRequest = () => {
+const generateSearchRequest = (id) => {
   /* ----- RANDOM SEARCH PARAMS GENERATION BEGIN ----- */
   const userVisits = {};
   const userId = getRandomUser();
@@ -24,15 +24,20 @@ const generateSearchRequest = () => {
   [checkOut] = checkOut.toISOString().split('T');
   /* ----- RANDOM SEARCH PARAMS GENERATION END ----- */
 
-  const serverUrl = process.env.HTTP_SERVER_URL || 'http://localhost:4568';
-
   const searchRequest = `${serverUrl}/search/${visitId}/${userId}/${market}/${checkIn}/${checkOut}/${QUERY_LIMIT}`;
-  http.get(searchRequest, () => {
-    fs.appendFile(LOG_FILE, `${searchRequest}\n`, (err) => {
-      if (err) throw err;
+  const requestTimeStart = Date.now();
+  http.get(searchRequest, (res) => {
+    res.on('data', () => {});
+    res.on('end', () => {
+      setTimeout(
+        generateSearchRequest.bind(this, id),
+        Math.floor(Math.random() * SEARCH_FREQUENCY_MS),
+      );
+      console.log(`${id}, status code: ${res.statusCode}, time lapsed: ${Date.now() - requestTimeStart}`);
     });
-  })
-    .on('error', console.error);
+  }).on('error', console.error);
 };
 
-setInterval(generateSearchRequest, Math.floor(Math.random() * SEARCH_FREQUENCY_IN_MS));
+for (let i = 1; i <= MAX_CONCURRENT_REQUESTS; i += 1) {
+  generateSearchRequest(i);
+}
