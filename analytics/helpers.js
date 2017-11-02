@@ -24,7 +24,7 @@ module.exports.reshapeResults = (message) => {
       listingId, neighbourhood, roomType, nightlyPrices, averageRating,
     } = result;
     listings.push(listingId);
-    prices.push(...nightlyPrices.map(night => night.price));
+    prices.push(...nightlyPrices.map(night => Number(night.price.split('$')[1])));
     neighbourhoods.push(neighbourhood);
     roomTypes.push(roomType);
     averageRatings.push(averageRating);
