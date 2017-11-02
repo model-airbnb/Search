@@ -10,8 +10,8 @@ module.exports.publishSearchEvent = (searchEventId, params, results, timeline) =
 
   const messagePayload = {
     searchEventId,
+    timestamp: timeline.httpSearchRequest.timestamp,
     request: {
-      timestamp: timeline.start.timestamp,
       visitId,
       userId,
       market,
@@ -32,6 +32,7 @@ module.exports.publishSearchEvent = (searchEventId, params, results, timeline) =
 module.exports.checkForMessages = () =>
   sqs.poll()
     .then((messages) => {
+      if (messages.length === 0) return [];
       const messageBodies = messages.map(message => JSON.parse(message.Body));
       sqs.done(messages);
       return messageBodies;

@@ -9,16 +9,15 @@ const backDateSearchTimestamp = () => {
 class OperationLog {
   constructor(event) {
     this.timeline = {
-      event,
-      start: { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 },
+      [event]: { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 },
     };
-    this.lastOperation = this.timeline.start.timestamp;
+    this.lastOperation = this.timeline[event].timestamp;
   }
 
   log(operation) {
     this.timeline[operation] = {
-      timestamp: new Date(),
-      msTimeLapsed: Date.now() - this.lastOperation,
+      timestamp: backDateSearchTimestamp(),
+      msTimeLapsed: backDateSearchTimestamp() - this.lastOperation,
     };
     this.lastOperation = this.timeline[operation].timestamp;
   }
