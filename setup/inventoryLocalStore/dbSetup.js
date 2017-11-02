@@ -8,15 +8,12 @@ const {
 
 const markets = [
   { name: 'San Francisco', filename: 'sf' },
-  { name: 'Seattle', filename: 'seattle' },
   { name: 'Sydney', filename: 'sydney' },
   { name: 'New York', filename: 'nyc' },
   { name: 'Toronto', filename: 'toronto' },
   { name: 'Paris', filename: 'paris' },
   { name: 'London', filename: 'london' },
-  { name: 'Hong Kong', filename: 'hk' },
   { name: 'Amsterdam', filename: 'amsterdam' },
-  { name: 'Montreal', filename: 'montreal' },
 ];
 
 const createTables = pool => (
