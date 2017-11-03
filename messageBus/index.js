@@ -5,14 +5,13 @@ const MVP_MARKET = 'San Francisco';
 
 module.exports.publishSearchEvent = (searchEventId, params, results, timeline) => {
   const {
-    visitId, userId, market, checkin, checkout, roomType, limit,
+    userId, market, checkin, checkout, roomType, limit,
   } = params;
 
   const messagePayload = {
     searchEventId,
     timestamp: timeline.httpSearchRequest.timestamp,
     request: {
-      visitId,
       userId,
       market,
       roomType: roomType || 'any',

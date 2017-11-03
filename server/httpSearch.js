@@ -6,7 +6,7 @@ const { OperationLog, getStayBookendNights, getUniqueAvailableListings } = requi
 const createService = (inventoryStore) => {
   const service = express();
 
-  service.get('/search/:visitId/:userId/:market/:checkin/:checkout/:limit*?', (req, res) => {
+  service.get('/search/:userId/:market/:checkin/:checkout/:limit*?', (req, res) => {
     const request = new OperationLog('httpSearchRequest');
     const { market, limit } = req.params;
     const { firstNight, lastNight } = getStayBookendNights(req.params);
@@ -22,7 +22,7 @@ const createService = (inventoryStore) => {
       .catch(console.error);
   });
 
-  service.get('/search/:visitId/:userId/:market/:limit*?', (req, res) => {
+  service.get('/search/:userId/:market/:limit*?', (req, res) => {
     const request = new OperationLog('httpSearchRequest');
     const { market, limit } = req.params;
     request.log('dbFetch');
