@@ -1,4 +1,5 @@
 const { checkForMessages } = require('../messageBus/index');
+const { keyAttributes, reshapeResults } = require('./helpers');
 const elasticSearch = require('./elasticSearch');
 
 const MAX_WORKERS = process.argv[2] || 10;
@@ -15,17 +16,17 @@ const processSearchEvents = (id) => {
     .then((messageBatch) => {
       messages = messageBatch.map(message => message.payload);
       const searchQueries = messages.map(message =>
-        Object.assign({ searchEventId: message.searchEventId }, message.request));
+        Object.assign(keyAttributes(message), message.request));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_QUERY, searchQueries);
     })
     .then(() => {
       const searchResults = messages.map(message =>
-        Object.assign({ searchEventId: message.searchEventId, timestamp: message.request.timestamp }, message.results));
+        Object.assign(keyAttributes(message), reshapeResults(message)));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_RESULTS, searchResults);
     })
     .then(() => {
       const searchResponseTimes = messages.map(message =>
-        Object.assign({ searchEventId: message.searchEventId, timestamp: message.request.timestamp }, message.timeline));
+        Object.assign(keyAttributes(message), message.timeline));
       elasticSearch.bulkInsertDocuments(ES_INDEX, ES_TYPE_PERFORMANCE, searchResponseTimes);
     })
     .then(() => {
