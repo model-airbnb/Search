@@ -13,6 +13,7 @@ module.exports.createTable = {
   availability: `
     CREATE TABLE availability (
       listing_id          INT NOT NULL REFERENCES listings(id),
+      market              VARCHAR(80),
       inventory_date      DATE NOT NULL,
       price               MONEY
     );
@@ -51,6 +52,7 @@ module.exports.createIndex = {
   listingsMarket: 'CREATE INDEX listings_market ON listings (market);',
   availabilityInventoryDate: 'CREATE INDEX availability_inventory_date ON availability (inventory_date);',
   availabilityListingIdInventoryDate: 'CREATE INDEX availability_listing_id_inventory_date ON availability (listing_id, inventory_date);',
+  availabilityMarketInventoryDate: 'CREATE INDEX availability_market_inventory_date ON availability (market, inventory_date);',
 };
 
 const DATA_DIR = `${__dirname}/data`;
@@ -81,14 +83,16 @@ module.exports.addSeedData = {
       floor(random() * 100) AS average_rating
     FROM listings_raw_data;
   `,
-  availability: `
+  availability: market => `
     INSERT INTO availability (
       listing_id,
+      market,
       inventory_date,
       price
     )
     SELECT
       listing_id,
+      '${market.name}'::varchar(80) AS market,
       to_date(inventory_date, 'YYYY-MM-DD') AS inventory_date,
       price
     FROM availability_raw_data

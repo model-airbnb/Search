@@ -8,7 +8,6 @@
     "chance": "^1.0.12",
     "elasticsearch": "^13.3.1",
     "express": "^4.16.2",
-    "mongoose": "^4.12.4",
     "pg": "^7.3.0",
     "uniqid": "^4.1.1"
   },
@@ -24,7 +23,8 @@
   "scripts": {
     "test": "mocha test/*.js",
     "dev": "nodemon server/index.js",
-    "setup-inventory": "node setup/inventoryLocalStore/dbSetup.js"
+    "start": "node server/index.js",
+    "setup-inventory": "node inventoryLocalStore/init/dbSetup.js"
   },
   "repository": {
     "type": "git",
