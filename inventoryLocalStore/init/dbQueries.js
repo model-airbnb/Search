@@ -13,7 +13,7 @@ module.exports.createTable = {
   availability: `
     CREATE TABLE availability (
       listing_id          INT NOT NULL REFERENCES listings(id),
-      market              VARCHAR(80),
+      market              VARCHAR(80) NOT NULL,
       inventory_date      DATE NOT NULL,
       price               MONEY
     );
