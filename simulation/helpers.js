@@ -5,8 +5,7 @@ const USER_ID_RANGE = 100000;
 const MAX_DAYS_UNTIL_TRAVEL = 45;
 const MAX_LENGTH_OF_STAY = 7;
 const markets = [
-  'San Francisco', 'Seattle', 'Sydney', 'New York', 'Toronto', 'Paris',
-  'London', 'Hong Kong', 'Amsterdam', 'Montreal',
+  'San Francisco', 'Sydney', 'New York', 'Toronto', 'Paris', 'London', 'Amsterdam',
 ];
 const roomTypes = ['any', 'Entire home/apt', 'Private room', 'Shared room'];
 

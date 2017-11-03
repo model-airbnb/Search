@@ -30,7 +30,7 @@ const seedTable = (pool, market) => (
     .then(() => pool.query(csvImport.listings(market)))
     .then(() => pool.query(csvImport.availability(market)))
     .then(() => pool.query(addSeedData.listings(market)))
-    .then(() => pool.query(addSeedData.availability))
+    .then(() => pool.query(addSeedData.availability(market)))
     .then(() => pool.query(dropTable.listingsRawData))
     .then(() => pool.query(dropTable.availabilityRawData))
     .catch(console.error)
@@ -59,6 +59,7 @@ for (let i = 0; i < markets.length; i += 1) {
 async.then(() => pool.query(createIndex.listingsMarket))
   .then(() => pool.query(createIndex.availabilityInventoryDate))
   .then(() => pool.query(createIndex.availabilityListingIdInventoryDate))
+  .then(() => pool.query(createIndex.availabilityMarketInventoryDate))
   .then(() => {
     console.log('INVENTORY STORE: All tables created and seeded with data.');
   })
