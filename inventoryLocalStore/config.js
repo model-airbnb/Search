@@ -1,9 +1,8 @@
 const config = {
-  host: process.env.PGHOST || 'localhost',
-  dbuser: process.env.PGUSER || 'search_service',
-  database: process.env.SEARCH_INVENTORY_DB || 'inventory',
-  password: '',
-  port: process.env.PGPORT || 5432,
+  host: process.env.POSTGRES_HOST || 'localhost',
+  dbuser: process.env.POSTGRES_USER || 'search_service',
+  database: process.env.POSTGRES_DB || 'inventory',
+  port: process.env.POSTGRES_PORT || 5432,
 };
 
 module.exports = config;
