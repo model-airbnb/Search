@@ -10,14 +10,7 @@ const randomWait = () => Math.floor(Math.random() * SEARCH_FREQUENCY_MS);
 
 const generateSearchRequest = (id) => {
   /* ----- RANDOM SEARCH PARAMS GENERATION BEGIN ----- */
-  const userVisits = {};
   const userId = getRandomUser();
-
-  // Visit Ids track the visits for each user. They start at 1 for every user and
-  // increment with each successive visit, and are therefore not unique across all
-  // users.
-  userVisits[userId] = (userVisits[userId] || 0) + 1;
-  const visitId = userVisits[userId];
 
   const market = getRandomMarket();
 
@@ -26,7 +19,7 @@ const generateSearchRequest = (id) => {
   [checkOut] = checkOut.toISOString().split('T');
   /* ----- RANDOM SEARCH PARAMS GENERATION END ----- */
 
-  const searchRequest = `${serverUrl}/search/${visitId}/${userId}/${market}/${checkIn}/${checkOut}/${QUERY_LIMIT}`;
+  const searchRequest = `${serverUrl}/search/${userId}/${market}/${checkIn}/${checkOut}/${QUERY_LIMIT}`;
   const requestTimeStart = Date.now();
   http.get(searchRequest, (res) => {
     res.on('data', () => {});
