@@ -11,7 +11,7 @@ class Inventory {
   }
 
   getListings(market, limit) {
-    const queryLimit = limit ? ` FETCH FIRST ${limit} ROWS ONLY` : '';
+    const queryLimit = limit ? ` LIMIT ${limit}` : '';
     const queryString = `SELECT * FROM listings WHERE market = '${market}'${queryLimit}`;
     return this.pool.query(queryString)
       .then(result => result.rows)
@@ -19,21 +19,18 @@ class Inventory {
   }
 
   getAvailableListings(market, firstNight, lastNight, limit) {
-    const queryLimit = limit ? ` FETCH FIRST ${limit * getLengthOfStay(firstNight, lastNight)} ROWS ONLY` : '';
+    const queryLimit = limit ? ` LIMIT ${limit}` : '';
     const queryString = `
-      SELECT DISTINCT *
-      FROM listings AS l
-      INNER JOIN availability AS a ON l.id = a.listing_id
-      INNER JOIN (
-        SELECT  listing_id,
-                count(listing_id) num_nights
-        FROM availability
+        SELECT
+          l.*,
+          array_agg(a.inventory_date) AS dates,
+          array_agg(a.price) AS prices
+        FROM listings AS l
+        INNER JOIN availability AS a ON l.id = a.listing_id
         WHERE inventory_date BETWEEN '${firstNight}'::timestamp AND '${lastNight}'::timestamp
-        GROUP BY listing_id
-      ) AS s ON l.id = s.listing_id
-      WHERE num_nights = (SELECT DATE_PART('day', '${lastNight}'::timestamp - '${firstNight}'::timestamp) + 1)
-        AND inventory_date BETWEEN '${firstNight}'::timestamp AND '${lastNight}'::timestamp
-        AND l.market = '${market}'
+          AND a.market = '${market}'
+        GROUP BY l.id
+        HAVING count(a.listing_id) = ${getLengthOfStay(firstNight, lastNight)}
         ${queryLimit}
     `;
     return this.pool.query(queryString)
