@@ -1,4 +1,4 @@
-const { checkForMessages } = require('../messageBus/index');
+const { searchInbox, checkForMessages } = require('../messageBus/index');
 const { keyAttributes, reshapeResults } = require('./helpers');
 const elasticSearch = require('./elasticSearch');
 
@@ -12,7 +12,7 @@ const SLEEP_MS = 2000;
 const processSearchEvents = (id) => {
   const taskTimeStart = Date.now();
   let messages;
-  checkForMessages()
+  checkForMessages(searchInbox)
     .then((messageBatch) => {
       messages = messageBatch.map(message => message.payload);
       const searchQueries = messages.map(message =>
