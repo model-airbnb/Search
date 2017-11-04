@@ -36,7 +36,7 @@ module.exports.checkForMessages = inbox =>
     .then((messages) => {
       if (messages.length === 0) return [];
       const messageBodies = messages.map(message => JSON.parse(message.Body));
-      sqs.done(messages);
+      sqs.done(inbox, messages);
       return messageBodies;
     })
     .catch(console.error);

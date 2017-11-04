@@ -41,12 +41,12 @@ module.exports.poll = (queue) => {
   });
 };
 
-module.exports.done = (messages) => {
+module.exports.done = (queue, messages) => {
   const entries = messages.map(message => (
     { Id: message.MessageId, ReceiptHandle: message.ReceiptHandle }
   ));
   const sqsParams = {
-    QueueUrl: config.queue,
+    QueueUrl: queue,
     Entries: entries,
   };
   sqs.deleteMessageBatch(sqsParams, (err) => {
