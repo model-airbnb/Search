@@ -51,7 +51,7 @@ module.exports.createTable = {
 module.exports.createIndex = {
   listingsMarket: 'CREATE INDEX listings_market ON listings (market);',
   availabilityInventoryDate: 'CREATE INDEX availability_inventory_date ON availability (inventory_date);',
-  availabilityListingIdInventoryDate: 'CREATE INDEX availability_listing_id_inventory_date ON availability (listing_id, inventory_date);',
+  availabilityListingIdInventoryDate: 'CREATE UNIQUE INDEX availability_listing_id_inventory_date ON availability (listing_id, inventory_date);',
   availabilityMarketInventoryDate: 'CREATE INDEX availability_market_inventory_date ON availability (market, inventory_date);',
 };
 

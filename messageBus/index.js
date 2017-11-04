@@ -3,6 +3,9 @@ const sqs = require('./amazonSQS');
 const TOPIC_SEARCH = 'search';
 const MVP_MARKET = 'San Francisco';
 
+module.exports.searchInbox = sqs.queues.searchInbox;
+module.exports.inventoryInbox = sqs.queues.inventoryInbox;
+
 module.exports.publishSearchEvent = (searchEventId, params, results, timeline) => {
   const {
     userId, market, checkin, checkout, roomType, limit,
@@ -28,12 +31,12 @@ module.exports.publishSearchEvent = (searchEventId, params, results, timeline) =
   sqs.publish({ topic: TOPIC_SEARCH, payload: messagePayload }, market === MVP_MARKET);
 };
 
-module.exports.checkForMessages = () =>
-  sqs.poll()
+module.exports.checkForMessages = inbox =>
+  sqs.poll(inbox)
     .then((messages) => {
       if (messages.length === 0) return [];
       const messageBodies = messages.map(message => JSON.parse(message.Body));
-      sqs.done(messages);
+      sqs.done(inbox, messages);
       return messageBodies;
     })
     .catch(console.error);
