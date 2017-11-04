@@ -11,6 +11,8 @@ const sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
 const MAX_NUMBER_OF_MESSAGES_TO_RECEIVE = 10;
 const MESSAGE_VISIBILITY_TIMEOUT = 10;
 
+module.exports.queues = config.subscriptions;
+
 module.exports.publish = (message, publishToAll) => {
   const subscribers = [config.queue].concat(publishToAll ? config.subscribers : []);
   subscribers.forEach((subscriber) => {
@@ -24,9 +26,9 @@ module.exports.publish = (message, publishToAll) => {
   });
 };
 
-module.exports.poll = () => {
+module.exports.poll = (queue) => {
   const sqsParams = {
-    QueueUrl: config.queue,
+    QueueUrl: queue,
     AttributeNames: ['All'],
     MaxNumberOfMessages: MAX_NUMBER_OF_MESSAGES_TO_RECEIVE,
     VisibilityTimeout: MESSAGE_VISIBILITY_TIMEOUT,
