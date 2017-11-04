@@ -61,16 +61,20 @@ class Inventory {
 
   addOrUpdateAvailability(availability) {
     const { listingId, inventoryDate, price } = availability;
-    const queryString = `
-        INSERT INTO availability (listing_id, market, inventory_date, price)
-          VALUES (${listingId}, (SELECT market from listings WHERE id = ${listingId}), '${inventoryDate}'::timestamp, '${price}'::money)
-          ON CONFLICT (listing_id, inventory_date) DO UPDATE SET
-            market = (SELECT market from listings WHERE id = ${listingId}),
-            price = '${price}'::money,
-            WHERE listing_id = ${listingId} AND inventory_date = '${inventoryDate}'::timestamp;
-    `;
-    return this.pool.query(queryString)
-      .catch(console.error);
+    return this.pool.query(`SELECT id FROM listings WHERE id = ${listingId}`)
+      .then((result) => {
+        const queryString = `
+            INSERT INTO availability (listing_id, market, inventory_date, price)
+              VALUES (${listingId}, (SELECT market from listings WHERE id = ${listingId}), '${inventoryDate}'::timestamp, '${price}'::money)
+              ON CONFLICT (listing_id, inventory_date) DO UPDATE SET
+                market = (SELECT market from listings WHERE id = ${listingId}),
+                price = '${price}'::money
+                WHERE availability.listing_id = ${listingId} AND availability.inventory_date = '${inventoryDate}'::timestamp;
+        `;
+        return result.rows.length === 0 ? Promise.resolve() :
+          this.pool.query(queryString)
+            .catch(console.error);
+      });
   }
 
   deleteAvailability(availability) {

@@ -15,8 +15,8 @@ const processInventoryUpdate = message => inventoryStore.addOrUpdateListing(mess
 
 const processAvailabilityUpdate = (message) => {
   const availabilityUpdateHandlers = {
-    [UPDATE_TYPE_ADD]: inventoryStore.addOrUpdateAvailability,
-    [UPDATE_TYPE_REMOVE]: inventoryStore.deleteAvailability,
+    [UPDATE_TYPE_ADD]: inventoryStore.addOrUpdateAvailability.bind(inventoryStore),
+    [UPDATE_TYPE_REMOVE]: inventoryStore.deleteAvailability.bind(inventoryStore),
   };
   const availabilityUpdates = message.date.map((inventoryDate, index) => {
     const update = {
