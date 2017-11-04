@@ -21,7 +21,7 @@ CREATE TABLE availability (
 );
 
 CREATE INDEX availability_inventory_date ON availability (inventory_date);
-CREATE INDEX availability_listing_id_inventory_date ON availability (listing_id, inventory_date);
+CREATE UNIQUE INDEX availability_listing_id_inventory_date ON availability (listing_id, inventory_date);
 CREATE INDEX availability_market_inventory_date ON availability (market, inventory_date);
 
 CREATE TABLE amenities (
