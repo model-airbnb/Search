@@ -37,6 +37,48 @@ class Inventory {
       .then(result => result.rows)
       .catch(console.error);
   }
+
+  addOrUpdateListing(listing) {
+    const {
+      listingName, hostName, market, neighbourhood, roomType, averageRating,
+    } = listing;
+    const listingId = listing.listings_id;
+    const queryString = `
+        INSERT INTO listings (id, name, host_name, market, neighbourhood, room_type, average_rating)
+          VALUES (${listingId}, '${listingName}', '${hostName}', '${market}', '${neighbourhood}', '${roomType}', ${averageRating})
+          ON CONFLICT (id) DO UPDATE SET
+            name = '${listingName}',
+            host_name = '${hostName}',
+            market = '${market}',
+            neighbourhood = '${neighbourhood}',
+            room_type = '${roomType}',
+            average_rating = ${averageRating}
+            WHERE listings.id = ${listingId};
+    `;
+    return this.pool.query(queryString)
+      .catch(console.error);
+  }
+
+  addOrUpdateAvailability(availability) {
+    const { listingId, inventoryDate, price } = availability;
+    const queryString = `
+        INSERT INTO availability (listing_id, market, inventory_date, price)
+          VALUES (${listingId}, (SELECT market from listings WHERE id = ${listingId}), '${inventoryDate}'::timestamp, '${price}'::money)
+          ON CONFLICT (listing_id, inventory_date) DO UPDATE SET
+            market = (SELECT market from listings WHERE id = ${listingId}),
+            price = '${price}'::money,
+            WHERE listing_id = ${listingId} AND inventory_date = '${inventoryDate}'::timestamp;
+    `;
+    return this.pool.query(queryString)
+      .catch(console.error);
+  }
+
+  deleteAvailability(availability) {
+    const { listingId, inventoryDate } = availability;
+    const queryString = `DELETE FROM availability WHERE listing_id = ${listingId} AND inventory_date = '${inventoryDate}'::timestamp;`;
+    return this.pool.query(queryString)
+      .catch(console.error);
+  }
 }
 
 module.exports = Inventory;
