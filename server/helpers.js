@@ -42,7 +42,7 @@ module.exports.getListings = dbResults =>
     } = listing;
 
     const nightlyPrices = dates.map((date, i) => (
-      { date, price: prices[i] }
+      { date: date.toISOString().split('T')[0], price: prices[i] }
     ));
 
     return {
