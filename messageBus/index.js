@@ -9,7 +9,7 @@ module.exports.recommendationInbox = sqs.queues.recommendationInbox;
 
 module.exports.publishSearchEvent = (searchEventId, params, results, timeline) => {
   const {
-    userId, market, checkin, checkout, roomType, limit,
+    userId, market, checkIn, checkOut, roomType, limit,
   } = params;
 
   const messagePayload = {
@@ -24,9 +24,9 @@ module.exports.publishSearchEvent = (searchEventId, params, results, timeline) =
     results,
     timeline,
   };
-  if (checkin && checkout) {
-    messagePayload.request.checkIn = checkin;
-    messagePayload.request.checkOut = checkout;
+  if (checkIn && checkOut) {
+    messagePayload.request.checkIn = checkIn;
+    messagePayload.request.checkOut = checkOut;
   }
 
   sqs.publish({ topic: TOPIC_SEARCH, payload: messagePayload }, market === MVP_MARKET);
