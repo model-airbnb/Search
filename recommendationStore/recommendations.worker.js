@@ -18,7 +18,8 @@ const processRecommendationsEvents = (id) => {
           },
         };
       });
-      const docUpserts = messages.map(db.updateInventoryScoring);
+      const docUpserts = messages.map(message =>
+        db.updateInventoryScoring(message(message.rules), message));
       return Promise.all(docUpserts);
     })
     .then(() => {

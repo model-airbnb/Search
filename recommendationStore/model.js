@@ -16,8 +16,8 @@ inventoryScoringSchema.index(keys, { unique: true });
 
 const inventoryScoring = mongoose.model('InventoryScoring', inventoryScoringSchema);
 
-const createFilter = (doc) => {
-  const { market, checkIn, checkOut } = doc.rules;
+const createFilter = (rule) => {
+  const { market, checkIn, checkOut } = rule;
   return {
     'rules.market': market,
     'rules.checkIn': checkIn,
@@ -25,9 +25,9 @@ const createFilter = (doc) => {
   };
 };
 
-module.exports.updateInventoryScoring = doc =>
+module.exports.updateInventoryScoring = (rule, doc) =>
   new Promise((resolve, reject) => {
-    inventoryScoring.update(createFilter(doc), doc, { upsert: true }, (err) => {
+    inventoryScoring.update(createFilter(rule), doc, { upsert: true }, (err) => {
       if (err) reject(err);
       else resolve();
     });
