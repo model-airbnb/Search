@@ -12,12 +12,10 @@ const inventoryScoringSchema = mongoose.Schema({
   },
 });
 
-inventoryScoringSchema.index(
-  {
-    'rules.market': 1, 'rules.checkIn': 1, 'rules.checkOut': 1, 'rules.roomType': 1,
-  },
-  { unique: true }
-);
+const keys = {
+  'rules.market': 1, 'rules.checkIn': 1, 'rules.checkOut': 1, 'rules.roomType': 1,
+};
+inventoryScoringSchema.index(keys, { unique: true });
 
 const inventoryScoring = mongoose.model('InventoryScoring', inventoryScoringSchema);
 
