@@ -4,6 +4,18 @@ const db = require('./model');
 const MAX_WORKERS = process.argv[2] || 1;
 const SLEEP_MS = 2000;
 
+const createFilter = (rules) => {
+  const {
+    market, checkIn, checkOut, roomType,
+  } = rules;
+  return {
+    'rules.market': market,
+    'rules.checkIn': checkIn,
+    'rules.checkOut': checkOut,
+    'rules.roomType': roomType,
+  };
+};
+
 const processRecommendationsEvents = (id) => {
   const taskTimeStart = Date.now();
   let messages;
@@ -18,7 +30,8 @@ const processRecommendationsEvents = (id) => {
           },
         };
       });
-      const docUpserts = messages.map(db.updateInventoryScoring);
+      const docUpserts = messages.map(message =>
+        db.updateInventoryScoring(createFilter(message.rules), message));
       return Promise.all(docUpserts);
     })
     .then(() => {
