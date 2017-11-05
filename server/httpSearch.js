@@ -1,37 +1,39 @@
 const express = require('express');
 const uniqid = require('uniqid');
+const recommendationStore = require('../recommendationStore/model');
 const messageBus = require('../messageBus/index');
-const { OperationLog, getStayBookendNights, getListings } = require('./helpers');
+const {
+  OperationLog, fetchListings, fetchCoefficients, sortListings,
+} = require('./helpers');
+
+const log = new OperationLog('httpSearchRequest');
 
 const createService = (inventoryStore) => {
   const service = express();
 
-  service.get('/search/:userId/:market/:checkin/:checkout/:limit*?', (req, res) => {
-    const request = new OperationLog('httpSearchRequest');
-    const { market, limit } = req.params;
-    const { firstNight, lastNight } = getStayBookendNights(req.params);
-    request.log('dbFetch');
-    inventoryStore.getAvailableListings(market, firstNight, lastNight, limit)
-      .then((results) => {
-        request.log('dbResults');
-        const listings = getListings(results);
+  service.get('/search/:userId/:market/:checkIn/:checkOut/:limit*?', (req, res) => {
+    Promise.all([
+      fetchListings(req.params, inventoryStore, log),
+      fetchCoefficients(req.params, recommendationStore)
+    ])
+      .then(([inventory, scoring]) => {
+        const listings = sortListings(inventory, scoring);
         res.status(200).send(listings);
-        request.log('httpSearchResponse');
-        messageBus.publishSearchEvent(uniqid(), req.params, listings, request.getLog());
+        log.add('httpSearchResponse');
+        messageBus.publishSearchEvent(uniqid(), req.params, listings, log.getLog());
       })
       .catch(console.error);
   });
 
   service.get('/search/:userId/:market/:limit*?', (req, res) => {
-    const request = new OperationLog('httpSearchRequest');
     const { market, limit } = req.params;
-    request.log('dbFetch');
+    log.add('dbFetch');
     inventoryStore.getListings(market, limit)
       .then((listings) => {
-        request.log('dbResults');
+        log.add('dbResults');
         res.status(200).send(listings);
-        request.log('httpSearchResponse');
-        messageBus.publishSearchEvent(uniqid(), req.params, listings, request.getLog());
+        log.add('httpSearchResponse');
+        messageBus.publishSearchEvent(uniqid(), req.params, listings, log.getLog());
       })
       .catch(console.error);
   });

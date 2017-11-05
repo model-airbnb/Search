@@ -6,6 +6,12 @@ const backDateSearchTimestamp = () => {
   return timestamp;
 };
 
+const getStayBookendNights = (params) => {
+  const lastNight = new Date(params.checkOut);
+  lastNight.setDate(lastNight.getDate() - 1);
+  return { firstNight: params.checkIn, lastNight: lastNight.toJSON().split('T')[0] };
+};
+
 class OperationLog {
   constructor(event) {
     this.timeline = {
@@ -14,7 +20,7 @@ class OperationLog {
     this.lastOperation = this.timeline[event].timestamp;
   }
 
-  log(operation) {
+  add(operation) {
     this.timeline[operation] = {
       timestamp: backDateSearchTimestamp(),
       msTimeLapsed: backDateSearchTimestamp() - this.lastOperation,
@@ -29,14 +35,24 @@ class OperationLog {
 
 module.exports.OperationLog = OperationLog;
 
-module.exports.getStayBookendNights = (params) => {
-  const lastNight = new Date(params.checkout);
-  lastNight.setDate(lastNight.getDate() - 1);
-  return { firstNight: params.checkin, lastNight: lastNight.toJSON().split('T')[0] };
+module.exports.fetchListings = (searchParams, db, log) => {
+  const { market, limit } = searchParams;
+  const { firstNight, lastNight } = getStayBookendNights(searchParams);
+  return db.getAvailableListings(market, firstNight, lastNight, limit)
+    .then((results) => {
+      log.add('dbResults');
+      return results;
+    });
 };
 
-module.exports.getListings = dbResults =>
-  dbResults.map((listing, index) => {
+module.exports.fetchCoefficients = (rule, db) =>
+  db.getInventoryScoring(rule)
+    .then((docs) => {
+      return docs.length > 0 ? docs[0].coefficients : { price: 0 };
+    });
+
+module.exports.sortListings = (inventory, scoring) => {
+  const listings = inventory.map((listing, index) => {
     const {
       id, name, host_name, market, neighbourhood, room_type, average_rating, dates, prices,
     } = listing;
@@ -54,6 +70,9 @@ module.exports.getListings = dbResults =>
       roomType: room_type,
       nightlyPrices,
       averageRating: average_rating,
-      score: index + 1,
+      score: scoring.price ? averagePrice * scoring.price : index + 1,
     };
   });
+
+  return listings.sort((a, b) => a.score - b.score);
+};
