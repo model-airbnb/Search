@@ -57,7 +57,7 @@ module.exports.sortListings = (inventory, scoring) => {
       id, name, host_name, market, neighbourhood, room_type, average_rating, dates, prices,
     } = listing;
 
-    const nightlyPrices = dates.map((date, i) => ({ date, price: prices[i] }));
+    const nightlyPrices = dates.map((date, i) => ({ date: date.toISOString().split('T')[0], price: prices[i] }));
     const averagePrice = nightlyPrices.reduce((sum, price) => sum + price) / nightlyPrices.length;
 
     return {
