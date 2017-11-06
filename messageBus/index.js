@@ -5,6 +5,7 @@ const MVP_MARKET = 'San Francisco';
 
 module.exports.searchInbox = sqs.queues.searchInbox;
 module.exports.inventoryInbox = sqs.queues.inventoryInbox;
+module.exports.recommendationInbox = sqs.queues.recommendationInbox;
 
 module.exports.publishSearchEvent = (searchEventId, params, results, timeline) => {
   const {
