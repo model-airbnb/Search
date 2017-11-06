@@ -1,4 +1,8 @@
 const SEARCH_START_DATE_OFFSET = 42;
+const HTTP_REQUEST = 'httpSearchRequest';
+const FETCH_LISTINGS = 'dbFetchListings';
+const FETCH_SCORING = 'dbFetchCoefficients';
+const SORT_LISTINGS = 'sortListings';
 
 const backDateSearchTimestamp = () => {
   const timestamp = new Date();
@@ -17,37 +21,46 @@ class OperationLog {
     this.timeline = {
       [event]: { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 },
     };
-    this.lastOperation = this.timeline[event].timestamp;
   }
 
-  add(operation) {
-    this.timeline[operation] = {
-      timestamp: backDateSearchTimestamp(),
-      msTimeLapsed: backDateSearchTimestamp() - this.lastOperation,
-    };
-    this.lastOperation = this.timeline[operation].timestamp;
+  add(operations) {
+    operations.forEach((operation) => {
+      this.timeline[operation] = { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 };
+    });
   }
 
-  getLog() {
+  stopTimer(operations) {
+    operations.forEach((operation) => {
+      const eventLogEntry = this.timeline[operation];
+      eventLogEntry.msTimeLapsed = backDateSearchTimestamp() - eventLogEntry.timestamp;
+    });
+  }
+
+  get() {
     return this.timeline;
   }
 }
 
 module.exports.OperationLog = OperationLog;
+module.exports.HTTP_REQUEST = HTTP_REQUEST;
+module.exports.FETCH_LISTINGS = FETCH_LISTINGS;
+module.exports.FETCH_SCORING = FETCH_SCORING;
+module.exports.SORT_LISTINGS = SORT_LISTINGS;
 
 module.exports.fetchListings = (searchParams, db, log) => {
   const { market, limit } = searchParams;
   const { firstNight, lastNight } = getStayBookendNights(searchParams);
   return db.getAvailableListings(market, firstNight, lastNight, limit)
     .then((results) => {
-      log.add('dbResults');
+      log.stopTimer([FETCH_LISTINGS]);
       return results;
     });
 };
 
-module.exports.fetchCoefficients = (rule, db) =>
+module.exports.fetchCoefficients = (rule, db, log) =>
   db.getInventoryScoring(rule)
     .then((docs) => {
+      log.stopTimer([FETCH_SCORING]);
       return docs.length > 0 ? docs[0].coefficients : { price: 0 };
     });
 
