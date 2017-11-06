@@ -23,7 +23,7 @@ class OperationLog {
     };
   }
 
-  add(operations) {
+  startTimer(operations) {
     operations.forEach((operation) => {
       this.timeline[operation] = { timestamp: backDateSearchTimestamp(), msTimeLapsed: 0 };
     });

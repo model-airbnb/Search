@@ -12,13 +12,13 @@ const createService = (inventoryStore) => {
 
   service.get('/search/:userId/:market/:checkIn/:checkOut/:limit*?', (req, res) => {
     const log = new OperationLog(HTTP_REQUEST);
-    log.add([FETCH_LISTINGS, FETCH_SCORING]);
+    log.startTimer([FETCH_LISTINGS, FETCH_SCORING]);
     Promise.all([
       fetchListings(req.params, inventoryStore, log),
       fetchCoefficients(req.params, recommendationStore, log)
     ])
       .then(([inventory, scoring]) => {
-        log.add([SORT_LISTINGS]);
+        log.startTimer([SORT_LISTINGS]);
         const listings = sortListings(inventory, scoring);
         log.stopTimer([SORT_LISTINGS]);
         res.status(200).send(listings);
