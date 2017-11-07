@@ -4,7 +4,7 @@ const { Pool } = require('pg');
 const { database, pgConnection, dbConnection } = require('../../inventoryLocalStore/config');
 const {
   createTable, csvImport, addSeedData, dropTable, createIndex,
-} = require('./dbQueries');
+} = require('./queries');
 
 const markets = [
   { name: 'San Francisco', filename: 'sf' },
