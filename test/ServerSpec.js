@@ -1,6 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { testDbConnection } = require('./inventoryDb/config');
+const helpers = require('../server/helpers');
 const Inventory = require('../inventoryLocalStore/index');
 //const recommendationStore = require('../recommendationStore/model');
 const messageBus = require('../messageBus/index');
@@ -18,85 +19,102 @@ const {
 
 const PORT = 4569;
 const TEST_USER_ID = '0000000';
+const LIMIT = '10';
 
 describe('Server Spec', () => {
   let server;
   let getAvailableListingsStub;
-  let publishMessageStub;
+  let sortListingsStub;
+  let publishSearchEventStub;
 
   beforeEach(() => {
     server = service.listen(PORT);
     getAvailableListingsStub = sinon.stub(testInventoryStore, 'getAvailableListings').returns(Promise.resolve([]));
-    publishMessageStub = sinon.stub(messageBus, 'publishSearchEvent');
+    // getAvailableListingsStub.returns(Promise.resolve([], getAvailableListingsStub.args[0]));
+    sortListingsStub = sinon.stub(helpers, 'sortListings').returns([]);
+    publishSearchEventStub = sinon.stub(messageBus, 'publishSearchEvent');
   });
 
   afterEach(() => {
     server.close();
     getAvailableListingsStub.restore();
-    publishMessageStub.restore();
+    sortListingsStub.restore();
+    publishSearchEventStub.restore();
   });
 
   describe('Inventory Store Interface', () => {
-    it('Should retrieve listings with the correct parameters for a one night stay (no limit)', (done) => {
+    it('Should retrieve listings using the correct parameters for a one night stay (no limit)', (done) => {
       request(server)
         .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${SINGLE_AVAILABILITY_DATE}/${SINGLE_AVAILABILITY_CHECKOUT}`)
         .expect(() => {
-          expect(getAvailableListingsStub.called).to.equal(true);
           expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_DATE, undefined)).to.be.true;
         })
         .end(done);
     });
 
-    it('Should retrieve listings with the correct parameters for a one night stay (with limit)', (done) => {
+    it('Should retrieve listings using the correct parameters for a one night stay (with limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${SINGLE_AVAILABILITY_DATE}/${SINGLE_AVAILABILITY_CHECKOUT}/10`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${SINGLE_AVAILABILITY_DATE}/${SINGLE_AVAILABILITY_CHECKOUT}/${LIMIT}`)
         .expect(() => {
-          expect(getAvailableListingsStub.called).to.equal(true);
-          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_DATE, '10')).to.be.true;
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_DATE, LIMIT)).to.be.true;
         })
         .end(done);
     });
 
-    it('Should retrieve listings with the correct parameters for a multi-night stay (no limit)', (done) => {
+    it('Should retrieve listings using the correct parameters for a multi-night stay (no limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}`)
+        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect(() => {
-          expect(getAvailableListingsStub.called).to.equal(true);
           expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, undefined)).to.be.true;
         })
         .end(done);
     });
 
-    it('Should retrieve listings with the correct parameters for a multi-night stay (with limit)', (done) => {
+    it('Should retrieve listings using the correct parameters for a multi-night stay (with limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/10`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect(() => {
-          expect(getAvailableListingsStub.called).to.equal(true);
-          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, '10')).to.be.true;
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, LIMIT)).to.be.true;
         })
         .end(done);
     });
   });
 
   describe('Message Bus Interface', () => {
-    it('Should publish all search requests with date ranges to the message bus', (done) => {
+    it('Should publish to the message bus after handling a search request', (done) => {
       request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
         .expect(() => {
-          expect(sqsStub.called).to.equal(true);
+          expect(publishSearchEventStub.calledAfter(getAvailableListingsStub)).to.be.true;
         })
         .end(done);
     });
 
-    it('Should publish all dateless search requests to the message bus', (done) => {
+    it('Should include the search request parameters when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          getAvailableListingsStub
+            .then((stubListings, args) => {
+              const { params } = args;
+              expect(params.market).to.equal(TEST_MARKET);
+              expect(params.checkIn).to.equal(AVAILABLE_DATE_RANGE_START);
+              expect(params.checkOut).to.equal(AVAILABLE_DATE_RANGE_END);
+              expect(params.limit).to.equal(LIMIT);
+            });
+        })
+        .end(done);
+    });
+
+    xit('Should publish all dateless search requests to the message bus', (done) => {
       request(server)
         .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}`)
         .expect(() => {
-          expect(sqsStub.called).to.equal(true);
+          expect(publishSearchEventStub.called).to.equal(true);
         })
         .end(done);
     });
