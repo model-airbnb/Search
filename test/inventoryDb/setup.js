@@ -7,7 +7,7 @@ const { createTable, createIndex } = require('../../inventoryLocalStore/setup/qu
 const {
   LISTINGS_TABLE, listingAttributes, listings,
   AVAILABILITY_TABLE, availabilityAttributes, availability,
-} = require('./fixtures');
+} = require('../fixtures');
 
 // Connect first to the postgres database to manage inventory_test database drop/create
 let pool = new Pool({

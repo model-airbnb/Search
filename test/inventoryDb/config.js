@@ -2,6 +2,7 @@ const config = {
   host: process.env.POSTGRES_HOST || 'localhost',
   dbuser: process.env.POSTGRES_USER_TEST || 'search_service_test',
   database: process.env.POSTGRES_DB_TEST || 'inventory_test',
+  password: process.env.POSTGRES_DB_TEST_PASSWORD || '',
   port: process.env.POSTGRES_PORT || 5432,
 };
 
