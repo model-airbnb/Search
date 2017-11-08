@@ -21,13 +21,16 @@ const TEST_USER_ID = '0000000';
 
 describe('Integration Spec', () => {
   let server;
+  let sqsStub;
 
   beforeEach(() => {
     server = service.listen(PORT);
+    sqsStub = sinon.stub(SQS, 'publish');
   });
 
   afterEach(() => {
     server.close();
+    sqsStub.restore();
   });
 
   describe('Search by market', () => {
@@ -173,16 +176,6 @@ describe('Integration Spec', () => {
   });
 
   describe('Message Bus Publish', () => {
-    let sqsStub;
-
-    beforeEach(() => {
-      sqsStub = sinon.stub(SQS, 'publish');
-    });
-
-    afterEach(() => {
-      sqsStub.restore();
-    });
-
     it('Should publish all search requests with date ranges to the message bus', (done) => {
       request(server)
         .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}`)
