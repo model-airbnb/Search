@@ -25,7 +25,7 @@
     "test": "mocha test/*.js",
     "dev": "nodemon server/index.js",
     "start": "node server/index.js",
-    "setup-inventory": "node inventoryLocalStore/init/dbSetup.js"
+    "setup-inventory": "node inventoryLocalStore/setup/index.js"
   },
   "repository": {
     "type": "git",
