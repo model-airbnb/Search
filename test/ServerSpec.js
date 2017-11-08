@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const { testDbConnection } = require('./inventoryDb/config');
 const helpers = require('../server/helpers');
 const Inventory = require('../inventoryLocalStore/index');
-//const recommendationStore = require('../recommendationStore/model');
+// const recommendationStore = require('../recommendationStore/model');
 const messageBus = require('../messageBus/index');
 
 const testInventoryStore = new Inventory(testDbConnection);
@@ -30,7 +30,6 @@ describe('Server Spec', () => {
   beforeEach(() => {
     server = service.listen(PORT);
     getAvailableListingsStub = sinon.stub(testInventoryStore, 'getAvailableListings').returns(Promise.resolve([]));
-    // getAvailableListingsStub.returns(Promise.resolve([], getAvailableListingsStub.args[0]));
     sortListingsStub = sinon.stub(helpers, 'sortListings').returns([]);
     publishSearchEventStub = sinon.stub(messageBus, 'publishSearchEvent');
   });
@@ -63,7 +62,7 @@ describe('Server Spec', () => {
 
     it('Should retrieve listings using the correct parameters for a multi-night stay (no limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}`)
         .expect('Content-Type', /json/)
         .expect(200)
         .expect(() => {
@@ -90,31 +89,6 @@ describe('Server Spec', () => {
         .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
         .expect(() => {
           expect(publishSearchEventStub.calledAfter(getAvailableListingsStub)).to.be.true;
-        })
-        .end(done);
-    });
-
-    it('Should include the search request parameters when publishing to the message bus', (done) => {
-      request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
-        .expect(() => {
-          getAvailableListingsStub
-            .then((stubListings, args) => {
-              const { params } = args;
-              expect(params.market).to.equal(TEST_MARKET);
-              expect(params.checkIn).to.equal(AVAILABLE_DATE_RANGE_START);
-              expect(params.checkOut).to.equal(AVAILABLE_DATE_RANGE_END);
-              expect(params.limit).to.equal(LIMIT);
-            });
-        })
-        .end(done);
-    });
-
-    xit('Should publish all dateless search requests to the message bus', (done) => {
-      request(server)
-        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}`)
-        .expect(() => {
-          expect(publishSearchEventStub.called).to.equal(true);
         })
         .end(done);
     });
