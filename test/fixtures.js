@@ -57,3 +57,102 @@ availability.push(...availableDateRange.map(date =>
   `(1931937, 'San Francisco', '${date}', '$125.00')`));
 
 module.exports.availability = availability;
+
+module.exports.stubListings = [
+  {
+    id: 2539,
+    name: 'Clean & quiet apt home by the park',
+    host_name: 'John',
+    market: 'New York',
+    neighbourhood: 'Kensington',
+    room_type: 'Private room',
+    average_rating: 72,
+    dates: [new Date('2017-11-24'), new Date('2017-11-25')],
+    prices: ['$99.00', '$99.00'],
+  },
+  {
+    id: 2595,
+    name: 'Midtown Castle',
+    host_name: 'Jennifer',
+    market: 'New York',
+    neighbourhood: 'Midtown',
+    room_type: 'Entire home/apt',
+    average_rating: 30,
+    dates: [new Date('2017-11-24'), new Date('2017-11-25')],
+    prices: ['$198.00', '$200.00'],
+  },
+  {
+    id: 3330,
+    name: '++ Brooklyn Penthouse Guestroom ++',
+    host_name: 'Julia',
+    market: 'New York',
+    neighbourhood: 'Williamsburg',
+    room_type: 'Private room',
+    average_rating: 49,
+    dates: [new Date('2017-11-24'), new Date('2017-11-25')],
+    prices: ['$70.00', '$75.00'],
+  },
+];
+
+module.exports.stubResults = [
+  {
+    listingId: 2539,
+    listingName: 'Clean & quiet apt home by the park',
+    hostName: 'John',
+    market: 'New York',
+    neighbourhood: 'Kensington',
+    roomType: 'Private room',
+    nightlyPrices: [
+      {
+        date: '2017-11-24',
+        price: '$99.00',
+      },
+      {
+        date: '2017-11-25',
+        price: '$99.00',
+      },
+    ],
+    averageRating: 72,
+    score: 1,
+  },
+  {
+    listingId: 2595,
+    listingName: 'Midtown Castle',
+    hostName: 'Jennifer',
+    market: 'New York',
+    neighbourhood: 'Midtown',
+    roomType: 'Entire home/apt',
+    nightlyPrices: [
+      {
+        date: '2017-11-24',
+        price: '$198.00',
+      },
+      {
+        date: '2017-11-25',
+        price: '$200.00',
+      },
+    ],
+    averageRating: 30,
+    score: 2,
+  },
+  {
+    listingId: 3330,
+    listingName: '++ Brooklyn Penthouse Guestroom ++',
+    hostName: 'Julia',
+    market: 'New York',
+    neighbourhood: 'Williamsburg',
+    roomType: 'Private room',
+    nightlyPrices: [
+      {
+        date: '2017-11-24',
+        price: '$70.00',
+      },
+      {
+        date: '2017-11-25',
+        price: '$75.00',
+      },
+    ],
+    averageRating: 49,
+    score: 3,
+  },
+];

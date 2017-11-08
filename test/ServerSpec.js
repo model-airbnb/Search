@@ -1,9 +1,7 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
 const { testDbConnection } = require('./inventoryDb/config');
-const helpers = require('../server/helpers');
 const Inventory = require('../inventoryLocalStore/index');
-// const recommendationStore = require('../recommendationStore/model');
 const messageBus = require('../messageBus/index');
 
 const testInventoryStore = new Inventory(testDbConnection);
@@ -11,11 +9,12 @@ const service = require('../server/httpSearch')(testInventoryStore);
 const request = require('supertest');
 
 const {
-  TEST_MARKET, TEST_MARKET_URI_ENCODED, NUM_TOTAL_LISTINGS,
-  SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_CHECKOUT, NUM_SINGLE_AVAILABILITY_LISTINGS,
+  TEST_MARKET, TEST_MARKET_URI_ENCODED, stubListings, stubResults,
+  SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_CHECKOUT,
   AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, AVAILABLE_DATE_RANGE_CHECKOUT,
-  AVAILABLE_DATE_RANGE_LENGTH, NUM_RANGE_AVAILABLE_LISTINGS,
 } = require('./fixtures');
+
+const { HTTP_REQUEST, FETCH_LISTINGS } = require('../server/helpers');
 
 const PORT = 4569;
 const TEST_USER_ID = '0000000';
@@ -24,20 +23,17 @@ const LIMIT = '10';
 describe('Server Spec', () => {
   let server;
   let getAvailableListingsStub;
-  let sortListingsStub;
   let publishSearchEventStub;
 
   beforeEach(() => {
     server = service.listen(PORT);
-    getAvailableListingsStub = sinon.stub(testInventoryStore, 'getAvailableListings').returns(Promise.resolve([]));
-    sortListingsStub = sinon.stub(helpers, 'sortListings').returns([]);
+    getAvailableListingsStub = sinon.stub(testInventoryStore, 'getAvailableListings').returns(Promise.resolve(stubListings));
     publishSearchEventStub = sinon.stub(messageBus, 'publishSearchEvent');
   });
 
   afterEach(() => {
     server.close();
     getAvailableListingsStub.restore();
-    sortListingsStub.restore();
     publishSearchEventStub.restore();
   });
 
@@ -89,6 +85,49 @@ describe('Server Spec', () => {
         .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
         .expect(() => {
           expect(publishSearchEventStub.calledAfter(getAvailableListingsStub)).to.be.true;
+        })
+        .end(done);
+    });
+
+    it('Should provide a search event id when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][0]).to.be.a('string');
+        })
+        .end(done);
+    });
+
+    it('Should include the search request parameters when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          const {
+            market, checkIn, checkOut, limit,
+          } = publishSearchEventStub.args[0][1];
+          expect(market).to.equal(TEST_MARKET);
+          expect(checkIn).to.equal(AVAILABLE_DATE_RANGE_START);
+          expect(checkOut).to.equal(AVAILABLE_DATE_RANGE_CHECKOUT);
+          expect(limit).to.equal(LIMIT);
+        })
+        .end(done);
+    });
+
+    it('Should include the search results when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][2]).to.deep.equal(stubResults);
+        })
+        .end(done);
+    });
+
+    it('Should include the operations log when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][3]).to.have.ownPropertyDescriptor(HTTP_REQUEST);
+          expect(publishSearchEventStub.args[0][3]).to.have.ownPropertyDescriptor(FETCH_LISTINGS);
         })
         .end(done);
     });
