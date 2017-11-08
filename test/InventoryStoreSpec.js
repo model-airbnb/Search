@@ -7,7 +7,7 @@ const {
   SINGLE_AVAILABILITY_DATE, NO_AVAILABILITY_DATE, NUM_SINGLE_AVAILABILITY_LISTINGS,
   AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END,
   AVAILABLE_DATE_RANGE_LENGTH, NUM_RANGE_AVAILABLE_LISTINGS,
-} = require('./inventoryDb/fixtures');
+} = require('./fixtures');
 
 describe('Inventory Store Spec', () => {
   const db = new Inventory(testDbConnection);
