@@ -188,11 +188,13 @@ module.exports.stubOperationLog = {
 
 module.exports.stubMessages = [
   {
-    Id: 'message1',
+    MessageId: 'message1',
+    ReceiptHandle: 'message1Receipt',
     Body: '{ "a": 1, "b": 2}',
   },
   {
-    Id: 'message2',
+    MessageId: 'message2',
+    ReceiptHandle: 'message2Receipt',
     Body: '{ "a": 3, "b": 4}',
   },
 ];

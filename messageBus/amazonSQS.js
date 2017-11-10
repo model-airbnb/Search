@@ -6,7 +6,7 @@ AWS.config.update({
   secretAccessKey: process.env.SQS_SECRET_KEY || config.secretKey,
 });
 
-const sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
+let sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
 
 const MAX_NUMBER_OF_MESSAGES_TO_RECEIVE = 10;
 const MESSAGE_VISIBILITY_TIMEOUT = 10;
@@ -52,4 +52,20 @@ module.exports.done = (queue, messages) => {
   sqs.deleteMessageBatch(sqsParams, (err) => {
     if (err) throw err;
   });
+};
+
+/**
+ * The following properties are used only for unit testing
+ */
+module.exports._stub = () => {
+  sqs = {
+    sendMessage: () => {},
+    receiveMessage: () => {},
+    deleteMessageBatch: () => {},
+  };
+  return [sqs, config.subscribers.length];
+};
+
+module.exports._restore = () => {
+  sqs = new AWS.SQS({ region: process.env.SQS_REGION || config.region });
 };
