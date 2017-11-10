@@ -185,3 +185,14 @@ module.exports.stubOperationLog = {
     msTimeLapsed: 0,
   },
 };
+
+module.exports.stubMessages = [
+  {
+    Id: 'message1',
+    Body: '{ "a": 1, "b": 2}',
+  },
+  {
+    Id: 'message2',
+    Body: '{ "a": 3, "b": 4}',
+  },
+];
