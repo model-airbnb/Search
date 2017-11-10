@@ -1,218 +1,133 @@
 const { expect } = require('chai');
 const sinon = require('sinon');
-const { testDbConnection } = require('./db/config');
+const { testDbConnection } = require('./inventoryDb/config');
 const Inventory = require('../inventoryLocalStore/index');
-const SQS = require('../messageBus/amazonSQS');
+const messageBus = require('../messageBus/index');
 
 const testInventoryStore = new Inventory(testDbConnection);
 const service = require('../server/httpSearch')(testInventoryStore);
 const request = require('supertest');
 
+const {
+  TEST_MARKET, TEST_MARKET_URI_ENCODED, stubListings, stubResults,
+  SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_CHECKOUT,
+  AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, AVAILABLE_DATE_RANGE_CHECKOUT,
+} = require('./fixtures');
+
+const { HTTP_REQUEST, FETCH_LISTINGS } = require('../server/helpers');
+
 const PORT = 4569;
-const TEST_VISIT_ID = '000';
-const TEST_USER_ID = '000000';
+const TEST_USER_ID = '0000000';
+const LIMIT = '10';
 
 describe('Server Spec', () => {
   let server;
+  let getAvailableListingsStub;
+  let publishSearchEventStub;
 
   beforeEach(() => {
     server = service.listen(PORT);
+    getAvailableListingsStub = sinon.stub(testInventoryStore, 'getAvailableListings').returns(Promise.resolve(stubListings));
+    publishSearchEventStub = sinon.stub(messageBus, 'publishSearchEvent');
   });
 
   afterEach(() => {
     server.close();
+    getAvailableListingsStub.restore();
+    publishSearchEventStub.restore();
   });
 
-  describe('Search by market', () => {
-    it('Should retrieve all listings matching "San Francisco"', (done) => {
+  describe('Inventory Store Interface', () => {
+    it('Should retrieve listings using the correct parameters for a one night stay (no limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          const notSFListings = response.body.filter(listing => listing.market !== 'San Francisco');
-          expect(notSFListings.length).to.equal(0);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve 0 listings matching "Fakecity"', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/Fakecity`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          expect(response.body.length).to.equal(0);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve top 2 listings matching "San Francisco"', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          expect(response.body.length).to.equal(2);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve all 5 listings matching "San Francisco" when top 100 is requested', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/100`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          expect(response.body.length).to.equal(5);
-        })
-        .end(done);
-    });
-  });
-
-  describe('Search by market and date range', () => {
-    it('Should retrieve all San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          const availableListings = response.body.filter(result => result.nightlyPrices[0].date.split('T')[0] === '2017-11-12');
-          expect(availableListings.length).to.equal(response.body.length);
-          expect(response.body.length).to.equal(4);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve no San Francisco listings available for checkin 2017-10-02 checkout 2017-10-03', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-10-02/2017-10-03`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          expect(response.body.length).to.equal(0);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve all San Francisco listings available for checkin 2017-10-19 and checkout 2017-10-24', (done) => {
-      const availableListings = new Set();
-      const stayDates = {
-        '2017-10-19': 0, '2017-10-20': 0, '2017-10-21': 0, '2017-10-22': 0, '2017-10-23': 0,
-      };
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-10-19/2017-10-24`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          response.body.forEach((result) => {
-            availableListings.add(result.listingId);
-            expect(result.nightlyPrices.length).to.equal(5);
-            result.nightlyPrices.forEach((night) => {
-              stayDates[night.date.split('T')[0]] += 1;
-            });
-          });
-          Object.keys(stayDates).forEach((date) => {
-            expect(stayDates[date]).to.equal(availableListings.size);
-          });
-        })
-        .end(done);
-    });
-
-    it('Should retrieve 2 of 4 San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13', (done) => {
-      const availableListings = new Set();
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13/2`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          response.body.forEach((result) => {
-            availableListings.add(result.listingId);
-          });
-          expect(availableListings.size).to.equal(2);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve all 4 San Francisco listings available for checkin 2017-11-12 checkout 2017-11-13 when top 100 is requested', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-12/2017-11-13/100`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          expect(response.body.length).to.equal(4);
-        })
-        .end(done);
-    });
-
-    it('Should retrieve 1 of 2 San Francisco listings available for checkin 2017-11-10 checkout 2017-11-13', (done) => {
-      const stayDates = { '2017-11-10': 0, '2017-11-11': 0, '2017-11-12': 0 };
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13/1`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          response.body.forEach((result) => {
-            result.nightlyPrices.forEach((night) => {
-              stayDates[night.date.split('T')[0]] += 1;
-            });
-          });
-          Object.keys(stayDates).forEach((date) => {
-            expect(stayDates[date]).to.equal(1);
-          });
-        })
-        .end(done);
-    });
-
-    it('Should retrieve all 2 San Francisco listings available for for checkin 2017-11-10 checkout 2017-11-13 when top 100 is requested', (done) => {
-      const availableListings = new Set();
-      const stayDates = { '2017-11-10': 0, '2017-11-11': 0, '2017-11-12': 0 };
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13/100`)
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .expect((response) => {
-          response.body.forEach((result) => {
-            availableListings.add(result.listingId);
-            expect(result.nightlyPrices.length).to.equal(3);
-            result.nightlyPrices.forEach((night) => {
-              stayDates[night.date.split('T')[0]] += 1;
-            });
-          });
-          Object.keys(stayDates).forEach((date) => {
-            expect(availableListings.size).to.equal(2);
-            expect(stayDates[date]).to.equal(2);
-          });
-        })
-        .end(done);
-    });
-  });
-
-  describe('Message Bus Publish', () => {
-    let sqsStub;
-
-    beforeEach(() => {
-      sqsStub = sinon.stub(SQS, 'publish');
-    });
-
-    afterEach(() => {
-      sqsStub.restore();
-    });
-
-    it('Should publish all search requests with date ranges to the message bus', (done) => {
-      request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco/2017-11-10/2017-11-13`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${SINGLE_AVAILABILITY_DATE}/${SINGLE_AVAILABILITY_CHECKOUT}`)
         .expect(() => {
-          expect(sqsStub.called).to.equal(true);
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_DATE, undefined)).to.be.true;
         })
         .end(done);
     });
 
-    it('Should publish all dateless search requests to the message bus', (done) => {
+    it('Should retrieve listings using the correct parameters for a one night stay (with limit)', (done) => {
       request(server)
-        .get(`/search/${TEST_VISIT_ID}/${TEST_USER_ID}/San%20Francisco`)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${SINGLE_AVAILABILITY_DATE}/${SINGLE_AVAILABILITY_CHECKOUT}/${LIMIT}`)
         .expect(() => {
-          expect(sqsStub.called).to.equal(true);
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, SINGLE_AVAILABILITY_DATE, SINGLE_AVAILABILITY_DATE, LIMIT)).to.be.true;
+        })
+        .end(done);
+    });
+
+    it('Should retrieve listings using the correct parameters for a multi-night stay (no limit)', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}`)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .expect(() => {
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, undefined)).to.be.true;
+        })
+        .end(done);
+    });
+
+    it('Should retrieve listings using the correct parameters for a multi-night stay (with limit)', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .expect(() => {
+          expect(getAvailableListingsStub.calledWithExactly(TEST_MARKET, AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END, LIMIT)).to.be.true;
+        })
+        .end(done);
+    });
+  });
+
+  describe('Message Bus Interface', () => {
+    it('Should publish to the message bus after handling a search request', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.calledAfter(getAvailableListingsStub)).to.be.true;
+        })
+        .end(done);
+    });
+
+    it('Should provide a search event id when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][0]).to.be.a('string');
+        })
+        .end(done);
+    });
+
+    it('Should include the search request parameters when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          const {
+            market, checkIn, checkOut, limit,
+          } = publishSearchEventStub.args[0][1];
+          expect(market).to.equal(TEST_MARKET);
+          expect(checkIn).to.equal(AVAILABLE_DATE_RANGE_START);
+          expect(checkOut).to.equal(AVAILABLE_DATE_RANGE_CHECKOUT);
+          expect(limit).to.equal(LIMIT);
+        })
+        .end(done);
+    });
+
+    it('Should include the search results when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][2]).to.deep.equal(stubResults);
+        })
+        .end(done);
+    });
+
+    it('Should include the operations log when publishing to the message bus', (done) => {
+      request(server)
+        .get(`/search/${TEST_USER_ID}/${TEST_MARKET_URI_ENCODED}/${AVAILABLE_DATE_RANGE_START}/${AVAILABLE_DATE_RANGE_CHECKOUT}/${LIMIT}`)
+        .expect(() => {
+          expect(publishSearchEventStub.args[0][3]).to.have.ownPropertyDescriptor(HTTP_REQUEST);
+          expect(publishSearchEventStub.args[0][3]).to.have.ownPropertyDescriptor(FETCH_LISTINGS);
         })
         .end(done);
     });
