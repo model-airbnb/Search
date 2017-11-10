@@ -1,3 +1,4 @@
+const TEST_MARKET = 'San Francisco';
 const AVAILABILITY_YEAR_MONTH = '2018-03';
 const SINGLE_AVAILABILITY_DAY = 26;
 const NO_AVAILABILITY_DAY = 12;
@@ -10,7 +11,7 @@ for (let d = AVAILABLE_RANGE_START_DAY; d <= AVAILABLE_RANGE_END_DAY; d += 1) {
 }
 
 module.exports = {
-  TEST_MARKET: 'San Francisco',
+  TEST_MARKET,
   TEST_MARKET_URI_ENCODED: 'San%20Francisco',
   NO_LISTINGS_MARKET: 'Atlantis',
 
@@ -44,10 +45,10 @@ module.exports.listings = [
 
 module.exports.availabilityAttributes = '(listing_id, market, inventory_date, price)';
 const availability = [
-  `(1427660, 'San Francisco', '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$155.00')`,
-  `(1931937, 'San Francisco', '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$95.00')`,
-  `(21065885, 'San Francisco', '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$2,525.00')`,
-  `(16362304, 'San Francisco', '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$79.00')`,
+  `(1427660, ${TEST_MARKET}, '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$155.00')`,
+  `(1931937, ${TEST_MARKET}, '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$95.00')`,
+  `(21065885, ${TEST_MARKET}, '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$2,525.00')`,
+  `(16362304, ${TEST_MARKET}, '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$79.00')`,
 ];
 
 availability.push(...availableDateRange.map(date =>
@@ -57,6 +58,15 @@ availability.push(...availableDateRange.map(date =>
   `(1931937, 'San Francisco', '${date}', '$125.00')`));
 
 module.exports.availability = availability;
+
+module.exports.stubSearchParams = {
+  userId: '0000000',
+  market: TEST_MARKET,
+  checkIn: `${AVAILABILITY_YEAR_MONTH}-${AVAILABLE_RANGE_START_DAY}`,
+  checkOut: `${AVAILABILITY_YEAR_MONTH}-${AVAILABLE_RANGE_END_DAY + 1}`,
+  roomType: 'any',
+  limit: 10,
+};
 
 module.exports.stubListings = [
   {
@@ -154,5 +164,37 @@ module.exports.stubResults = [
     ],
     averageRating: 49,
     score: 3,
+  },
+];
+
+module.exports.stubOperationLog = {
+  httpSearchRequest: {
+    timestamp: '2017-09-25T00:13:18.767Z',
+    msTimeLapsed: 0,
+  },
+  dbFetchListings: {
+    timestamp: '2017-09-25T00:13:18.767Z',
+    msTimeLapsed: 70,
+  },
+  dbFetchCoefficients: {
+    timestamp: '2017-09-25T00:13:18.767Z',
+    msTimeLapsed: 16,
+  },
+  sortListings: {
+    timestamp: '2017-09-25T00:13:18.837Z',
+    msTimeLapsed: 0,
+  },
+};
+
+module.exports.stubMessages = [
+  {
+    MessageId: 'message1',
+    ReceiptHandle: 'message1Receipt',
+    Body: '{ "a": 1, "b": 2}',
+  },
+  {
+    MessageId: 'message2',
+    ReceiptHandle: 'message2Receipt',
+    Body: '{ "a": 3, "b": 4}',
   },
 ];
