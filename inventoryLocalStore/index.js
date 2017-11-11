@@ -53,8 +53,15 @@ class Inventory {
             neighbourhood = '${neighbourhood}',
             room_type = '${roomType}',
             average_rating = ${averageRating}
-            WHERE listings.id = ${listingId};
+            WHERE listings.id = ${listingId}
+          RETURNING id;
     `;
+    return this.pool.query(queryString)
+      .catch(console.error);
+  }
+
+  deleteListing(listingId) {
+    const queryString = `DELETE FROM listings WHERE id = ${listingId};`;
     return this.pool.query(queryString)
       .catch(console.error);
   }
@@ -69,9 +76,10 @@ class Inventory {
               ON CONFLICT (listing_id, inventory_date) DO UPDATE SET
                 market = (SELECT market from listings WHERE id = ${listingId}),
                 price = '${price}'::money
-                WHERE availability.listing_id = ${listingId} AND availability.inventory_date = '${inventoryDate}'::timestamp;
+                WHERE availability.listing_id = ${listingId} AND availability.inventory_date = '${inventoryDate}'::timestamp
+              RETURNING listing_id, inventory_date;
         `;
-        return result.rows.length === 0 ? Promise.resolve() :
+        return result.rows.length === 0 ? Promise.resolve(null) :
           this.pool.query(queryString)
             .catch(console.error);
       });
