@@ -43,6 +43,16 @@ module.exports.listings = [
   '(16362304, \'Best Master Suite in Town\', \'Harris\', \'San Francisco\', \'Seacliff\', \'Private room\', 96)',
 ];
 
+module.exports.newListing = {
+  listings_id: 12345,
+  listingName: 'This is a new listing',
+  hostName: 'Christine',
+  market: 'San Francisco',
+  neighbourhood: 'Mission',
+  roomType: 'Entire home/apt',
+  averageRating: 100,
+};
+
 module.exports.availabilityAttributes = '(listing_id, market, inventory_date, price)';
 const availability = [
   `(1427660, ${TEST_MARKET}, '${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY}', '$155.00')`,
@@ -58,6 +68,12 @@ availability.push(...availableDateRange.map(date =>
   `(1931937, 'San Francisco', '${date}', '$125.00')`));
 
 module.exports.availability = availability;
+
+module.exports.newAvailability = {
+  listingId: 8001958,
+  inventoryDate: `${AVAILABILITY_YEAR_MONTH}-${SINGLE_AVAILABILITY_DAY + 1}`,
+  price: '$1.00',
+};
 
 module.exports.stubSearchParams = {
   userId: '0000000',
