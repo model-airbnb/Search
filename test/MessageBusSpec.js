@@ -145,11 +145,14 @@ describe('Message Bus Spec', () => {
     let numSubscribers;
 
     describe('sendMessage', () => {
-      let sendMessageSpy;
+      let sendMessageStub;
 
       beforeEach(() => {
         [sqsStub, numSubscribers] = amazonSQS._stub();
-        sendMessageSpy = sinon.spy(sqsStub, 'sendMessage');
+        sendMessageStub = sinon.stub(sqsStub, 'sendMessage')
+          .callsFake((params, callback) => {
+            callback(null);
+          });
       });
 
       afterEach(() => {
@@ -159,31 +162,45 @@ describe('Message Bus Spec', () => {
 
       it(`Should send a message to all subscriber queues when publishing a search event for ${TEST_MARKET}`, () => {
         amazonSQS.publish(stubMessages[0], true);
-        expect(sendMessageSpy.callCount).to.equal(numSubscribers + 1);
+        expect(sendMessageStub.callCount).to.equal(numSubscribers + 1);
       });
 
       it(`Should send a message only to the Search queue when publishing a search event not for ${TEST_MARKET}`, () => {
         amazonSQS.publish(stubMessages[0], false);
-        expect(sendMessageSpy.callCount).to.equal(1);
+        expect(sendMessageStub.callCount).to.equal(1);
       });
 
-      it('Should correctly set the parameters of the sendMessage method' , () => {
+      it('Should correctly set the parameters of the sendMessage method', () => {
         amazonSQS.publish(stubMessages[0], false);
-        const sqsParams = sendMessageSpy.args[0][0];
+        const sqsParams = sendMessageStub.args[0][0];
         expect(sqsParams).to.have.ownPropertyDescriptor('QueueUrl');
         expect(sqsParams.QueueUrl).to.be.a('string');
         expect(sqsParams).to.have.ownPropertyDescriptor('MessageBody');
         expect(sqsParams.MessageBody).to.be.a('string');
         expect(JSON.parse(sqsParams.MessageBody)).to.deep.equal(stubMessages[0]);
       });
+
+      it('Should throw an error if sendMessage fails', () => {
+        sendMessageStub.callsFake((params, callback) => {
+          callback(new Error('sendMessage error'));
+        });
+        try {
+          amazonSQS.publish(stubMessages[0], false);
+        } catch (error) {
+          expect(error.message).to.equal('sendMessage error');
+        }
+      });
     });
 
     describe('receiveMessage', () => {
-      let receiveMessageSpy;
+      let receiveMessageStub;
 
       beforeEach(() => {
         [sqsStub] = amazonSQS._stub();
-        receiveMessageSpy = sinon.spy(sqsStub, 'receiveMessage');
+        receiveMessageStub = sinon.stub(sqsStub, 'receiveMessage')
+          .callsFake((params, callback) => {
+            callback(null, {});
+          });
       });
 
       afterEach(() => {
@@ -191,29 +208,45 @@ describe('Message Bus Spec', () => {
         amazonSQS._restore();
       });
 
-      it('Should receive data from SQS', () => {
+      it('Should receive data from SQS', (done) => {
         amazonSQS.poll(STUB_MESSAGE_BUS_QUEUE)
           .then(() => {
-            expect(receiveMessageSpy.called).to.be(true);
+            expect(receiveMessageStub.called).to.be.true;
+            done();
           });
       });
 
-      it('Should receive data from the specified queue', () => {
+      it('Should receive data from the specified queue', (done) => {
         amazonSQS.poll(STUB_MESSAGE_BUS_QUEUE)
           .then(() => {
-            const sqsParams = receiveMessageSpy.args[0][0];
+            const sqsParams = receiveMessageStub.args[0][0];
             expect(sqsParams).to.have.ownPropertyDescriptor('QueueUrl');
             expect(sqsParams.QueueUrl).to.equal(STUB_MESSAGE_BUS_QUEUE);
+            done();
+          });
+      });
+
+      it('Should throw an error if receiveMessage fails', (done) => {
+        receiveMessageStub.callsFake((params, callback) => {
+          callback(new Error('receiveMessage error'), null);
+        });
+        amazonSQS.poll(STUB_MESSAGE_BUS_QUEUE)
+          .catch((err) => {
+            expect(err.message).to.equal('receiveMessage error');
+            done();
           });
       });
     });
 
     describe('deleteMessageBatch', () => {
-      let deleteMessageBatchSpy;
+      let deleteMessageBatchStub;
 
       beforeEach(() => {
         [sqsStub] = amazonSQS._stub();
-        deleteMessageBatchSpy = sinon.spy(sqsStub, 'deleteMessageBatch');
+        deleteMessageBatchStub = sinon.stub(sqsStub, 'deleteMessageBatch')
+          .callsFake((params, callback) => {
+            callback(null);
+          });
       });
 
       afterEach(() => {
@@ -223,7 +256,7 @@ describe('Message Bus Spec', () => {
 
       it('Should delete messages from the queue', () => {
         amazonSQS.done(STUB_MESSAGE_BUS_QUEUE, stubMessages);
-        expect(deleteMessageBatchSpy.called).to.be.true;
+        expect(deleteMessageBatchStub.called).to.be.true;
       });
 
       it('Should correctly set the parameters of the deleteMessageBatch method', () => {
@@ -232,11 +265,22 @@ describe('Message Bus Spec', () => {
           Id: message.MessageId,
           ReceiptHandle: message.ReceiptHandle,
         }));
-        const sqsParams = deleteMessageBatchSpy.args[0][0];
+        const sqsParams = deleteMessageBatchStub.args[0][0];
         expect(sqsParams).to.have.ownPropertyDescriptor('QueueUrl');
         expect(sqsParams.QueueUrl).to.equal(STUB_MESSAGE_BUS_QUEUE);
         expect(sqsParams).to.have.ownPropertyDescriptor('Entries');
         expect(sqsParams.Entries).to.deep.equal(stubEntries);
+      });
+
+      it('Should throw an error if deleteMessageBatch fails', () => {
+        deleteMessageBatchStub.callsFake((params, callback) => {
+          callback(new Error('deleteMessageBatch error'));
+        });
+        try {
+          amazonSQS.done(STUB_MESSAGE_BUS_QUEUE, stubMessages);
+        } catch (error) {
+          expect(error.message).to.equal('deleteMessageBatch error');
+        }
       });
     });
   });
