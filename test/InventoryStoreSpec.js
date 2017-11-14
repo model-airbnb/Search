@@ -7,6 +7,7 @@ const {
   SINGLE_AVAILABILITY_DATE, NO_AVAILABILITY_DATE, NUM_SINGLE_AVAILABILITY_LISTINGS,
   AVAILABLE_DATE_RANGE_START, AVAILABLE_DATE_RANGE_END,
   AVAILABLE_DATE_RANGE_LENGTH, NUM_RANGE_AVAILABLE_LISTINGS,
+  newListing, newAvailability,
 } = require('./fixtures');
 
 describe('Inventory Store Spec', () => {
@@ -111,6 +112,147 @@ describe('Inventory Store Spec', () => {
           results.forEach((result) => {
             expect(result.dates.length).to.equal(AVAILABLE_DATE_RANGE_LENGTH);
           });
+          done();
+        });
+    });
+  });
+
+  describe('Listings Updates', () => {
+    it('Should add a new listing to the database if it does not already exist', (done) => {
+      db.addOrUpdateListing(newListing)
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          expect(result.rows[0].id).to.equal(newListing.listings_id);
+          return db.getListings(newListing.market);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(NUM_TOTAL_LISTINGS + 1);
+          return db.deleteListing(newListing.listings_id);
+        })
+        .then(() => {
+          done();
+        });
+    });
+
+    it('Should update an existing listing in the database', (done) => {
+      const updatedListing = Object.assign(newListing);
+      updatedListing.averageRating = newListing.averageRating - 5;
+      db.addOrUpdateListing(newListing)
+        .then(() => db.addOrUpdateListing(updatedListing))
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          expect(result.rows[0].id).to.equal(newListing.listings_id);
+          return db.getListings(newListing.market);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(NUM_TOTAL_LISTINGS + 1);
+          return db.deleteListing(newListing.listings_id);
+        })
+        .then(() => {
+          done();
+        });
+    });
+
+    it('Should delete a listing if it exists in the database', (done) => {
+      db.addOrUpdateListing(newListing)
+        .then(() => db.deleteListing(newListing.listings_id))
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          return db.getListings(newListing.market);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(NUM_TOTAL_LISTINGS);
+          return db.deleteListing(newListing.listings_id);
+        })
+        .then((result) => {
+          expect(result.rowCount).to.equal(0);
+          done();
+        });
+    });
+  });
+
+  describe('Availability Updates', () => {
+    it('Should add availability for an existing listing', (done) => {
+      db.addOrUpdateAvailability(newAvailability)
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          expect(result.rows[0].listing_id).to.equal(newAvailability.listingId);
+          expect(result.rows[0].inventory_date.toISOString().split('T')[0]).to.equal(newAvailability.inventoryDate);
+
+          const { inventoryDate } = newAvailability;
+          return db.getAvailableListings(TEST_MARKET, inventoryDate, inventoryDate);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(1);
+          const availableListing = results[0];
+          expect(availableListing.id).to.equal(newAvailability.listingId);
+          expect(availableListing.dates[0].toISOString().split('T')[0]).to.equal(newAvailability.inventoryDate);
+          expect(availableListing.market).to.equal(TEST_MARKET);
+          expect(availableListing.prices[0]).to.equal(newAvailability.price);
+          return db.deleteAvailability(newAvailability);
+        })
+        .then(() => {
+          done();
+        });
+    });
+
+    it('Should update availability for an existing listing', (done) => {
+      const { inventoryDate } = newAvailability;
+      const updatedAvailability = Object.assign(newAvailability);
+      updatedAvailability.price = '$88.00';
+      db.addOrUpdateAvailability(newAvailability)
+        .then(() => db.addOrUpdateAvailability(updatedAvailability))
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          expect(result.rows[0].listing_id).to.equal(newAvailability.listingId);
+          expect(result.rows[0].inventory_date.toISOString().split('T')[0]).to.equal(newAvailability.inventoryDate);
+          return db.getAvailableListings(TEST_MARKET, inventoryDate, inventoryDate);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(1);
+          const availableListing = results[0];
+          expect(availableListing.id).to.equal(newAvailability.listingId);
+          expect(availableListing.dates[0].toISOString().split('T')[0]).to.equal(newAvailability.inventoryDate);
+          expect(availableListing.market).to.equal(TEST_MARKET);
+          expect(availableListing.prices[0]).to.equal(updatedAvailability.price);
+          return db.deleteAvailability(updatedAvailability);
+        })
+        .then(() => {
+          done();
+        });
+    });
+
+    it('Should delete availability for an existing listing', (done) => {
+      const { inventoryDate } = newAvailability;
+      db.addOrUpdateAvailability(newAvailability)
+        .then(() => db.deleteAvailability(newAvailability))
+        .then((result) => {
+          expect(result.rowCount).to.equal(1);
+          return db.getAvailableListings(TEST_MARKET, inventoryDate, inventoryDate);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(0);
+          return db.deleteAvailability(newAvailability);
+        })
+        .then((result) => {
+          expect(result.rowCount).to.equal(0);
+          done();
+        });
+    });
+
+    it('Should not add availability for a listing not in the listings table', (done) => {
+      const invalidAvailability = Object.assign(newAvailability);
+      invalidAvailability.listingId = 0;
+      const { inventoryDate } = invalidAvailability;
+      db.addOrUpdateAvailability(invalidAvailability)
+        .then((result) => {
+          expect(result).to.be.null;
+          return db.getAvailableListings(TEST_MARKET, inventoryDate, inventoryDate);
+        })
+        .then((results) => {
+          expect(results.length).to.equal(0);
+        })
+        .then(() => {
           done();
         });
     });
