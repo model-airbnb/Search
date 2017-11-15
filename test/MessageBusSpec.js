@@ -199,7 +199,7 @@ describe('Message Bus Spec', () => {
         [sqsStub] = amazonSQS._stub();
         receiveMessageStub = sinon.stub(sqsStub, 'receiveMessage')
           .callsFake((params, callback) => {
-            callback(null, {});
+            callback(null, { Messages: stubMessages });
           });
       });
 
@@ -222,6 +222,14 @@ describe('Message Bus Spec', () => {
             const sqsParams = receiveMessageStub.args[0][0];
             expect(sqsParams).to.have.ownPropertyDescriptor('QueueUrl');
             expect(sqsParams.QueueUrl).to.equal(STUB_MESSAGE_BUS_QUEUE);
+            done();
+          });
+      });
+
+      it('Should return a promise that resolves to the received data', (done) => {
+        amazonSQS.poll(STUB_MESSAGE_BUS_QUEUE)
+          .then((messages) => {
+            expect(messages).to.deep.equal(stubMessages);
             done();
           });
       });
