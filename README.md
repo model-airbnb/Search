@@ -13,12 +13,13 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 1. [Development](#development)
     1. [Installing Dependencies](#installing-dependencies)
     1. [Tasks](#tasks)
+1. [System Design](#system-design)
 
-## Usage
+# Usage
 
 > Some usage instructions
 
-## Requirements
+# Requirements
 
 - Node 6.9.x
 - Express 4.16.2
@@ -27,6 +28,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 - Elastic Search
 - Kibana
 
-## Other Information
-
-(TODO: fill this out with details about your project. Suggested ideas: architecture diagram, schema, and any other details from your app plan that sound interesting.)
+# System Design
+- [Server Architecture](./docs/Architecture.md)
